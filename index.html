@@ -780,7 +780,7 @@
 <body>
   <header>
     <nav class="nav">
-        <img src="img/logoacianexus.png" alt="ACIA Nexus" class="brand-logo">
+      <img src="img/logoacianexus.png" alt="ACIA Nexus" class="brand-logo">
       <a href="#/" data-link>Home</a>
       <a href="#/criar" data-link>Criar tarefa</a>
       <a href="#/kanban" data-link>Kanbans</a>
@@ -788,8 +788,8 @@
       <a href="#/reportar" data-link>Suporte</a>
       <div class="spacer"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
-          <!-- <button id="mu-open" class="btn hidden" type="button">Novo comunicado</button> -->
-          <a id="members-open" class="hidden" href="#/membros" data-link>Membros</a>
+        <!-- <button id="mu-open" class="btn hidden" type="button">Novo comunicado</button> -->
+        <a id="members-open" class="hidden" href="#/membros" data-link>Membros</a>
       </div>
       <span class="chip" id="authChip">Offline</span>
       <button id="btnLogin" class="btn secondary" type="button">Entrar</button>
@@ -957,6 +957,7 @@
             </div>
           </div>
         </div>
+        <!-- Descrição (modelo rápido) -->
         <div class="card" style="margin:12px 0">
           <h3 style="margin:0 0 8px">Descrição (modelo rápido)</h3>
           <div class="row">
@@ -966,22 +967,33 @@
             </div>
             <div class="field">
               <label for="md-acoes">Ações</label>
-              <input id="md-acoes" type="text" placeholder="Principais passos/entregas" />
+              <input id="md-acoes" type="text" placeholder="Separe por vírgulas: ação 1, ação 2..." />
             </div>
           </div>
           <div class="field">
             <label for="md-info">Informações adicionais</label>
             <input id="md-info" type="text" placeholder="Restrições, links, contexto..." />
           </div>
-          <div style="display:flex;gap:8px;justify-content:flex-end">
-            <button id="md-aplicar" class="btn secondary" type="button">Aplicar modelo à descrição</button>
-          </div>
+          <!-- botão antigo removido -->
         </div>
 
-        <div class="field">
-          <label for="c-desc">Descrição</label>
-          <textarea id="c-desc" placeholder="Detalhe o objetivo, critérios de aceite, contexto…"></textarea>
+        <!-- Descrição (agora oculta, preenchida automaticamente) -->
+        <textarea id="c-desc" hidden></textarea>
+
+        <!-- Checklist (gerada do modelo) -->
+        <div>
+          <h4 style="margin:10px 0 6px">Checklist (gerada do modelo)</h4>
+          <div id="c-checklist"></div>
         </div>
+
+        <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
+          <!-- botão de IA removido -->
+          <button id="c-create" class="btn" type="button">Criar card</button>
+          <span id="c-msg" class="msg"></span>
+        </div>
+
+
+
 
         <!-- ROTINA -->
         <div id="rt-block" class="card hidden" style="margin:12px 0 14px">
@@ -1017,14 +1029,7 @@
         </div>
 
         <div>
-          <h4 style="margin:10px 0 6px">Checklist (pré-criação)</h4>
           <div id="c-checklist"></div>
-        </div>
-
-        <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
-          <button id="c-ai" class="btn secondary" type="button">Gerar checklist (Groq)</button>
-          <button id="c-create" class="btn" type="button">Criar card</button>
-          <span id="c-msg" class="msg"></span>
         </div>
       </div>
     </section>
@@ -1038,13 +1043,14 @@
           <div class="tab" data-b="ROTINA">Rotina</div>
           <div class="tab" data-b="EVENTOS">Eventos</div>
           <div class="tab" data-b="COMERCIAL">Comercial</div>
-          <!--<div class="tab" data-b="COMPRAS">Compras</div>-->
-          <div class="spacer"></div>
+          <input id="k-q" type="search" placeholder="Buscar por título…" />          
           <div style="display:flex;gap:8px;align-items:center">
             <select id="k-resp" title="Responsável"></select>
-            <input id="k-q" type="search" placeholder="Buscar por título…" />
-            <button id="k-refresh" class="btn">Atualizar</button>
           </div>
+          <!--<div class="tab" data-b="COMPRAS">Compras</div>-->
+          <div class="spacer"></div>
+          <button id="k-refresh" class="btn">Atualizar</button>
+
         </div>
 
         <div class="kpis" id="kpis"></div>
@@ -1976,7 +1982,6 @@ Contexto:
       const items = [];
       items.push('Definir objetivo e escopo');
       items.push('Mapear responsáveis e prazos');
-      items.push('Listar entregáveis e critérios de aceite');
 
       if (board === 'EVENTOS') {
         items.push('Reservar local e confirmar data');
@@ -2038,12 +2043,19 @@ Contexto:
       const cBoard = $('#c-board');
       const cResp = $('#c-resp');
       const cDue = $('#c-due');
-      const cDesc = $('#c-desc');
+      const cDesc = $('#c-desc');                // permanece oculto (compat)
       const cChecklistWrap = $('#c-checklist');
-      const btnAI = $('#c-ai');
+      const btnAI = $('#c-ai');                   // IA permanece!
       const btnCreate = $('#c-create');
       const msg = $('#c-msg');
-      const cMembers = $('#c-members');  // << NOVO
+      const cMembers = $('#c-members');
+
+      // Inputs do "Descrição (modelo rápido)"
+      const mdObj = $('#md-objetivo');
+      const mdAco = $('#md-acoes');
+      const mdInf = $('#md-info');
+
+      // GUT
       const cG = $('#c-g'), cU = $('#c-u'), cT = $('#c-t'), cGUT = $('#c-gut');
       function refreshGUT() {
         const g = computeGut(cG.value, cU.value, cT.value);
@@ -2052,29 +2064,24 @@ Contexto:
       [cG, cU, cT].forEach(el => el.addEventListener('input', refreshGUT));
       refreshGUT();
 
+      // Permissões
       function paintCreatePermissions() {
         const canEdit = (currentRole !== 'viewer') && !!currentUser;
-        [cTitle, cBoard, cResp, cDue, cDesc, btnAI, btnCreate, cMembers].forEach(el => el.disabled = !canEdit);
+        [
+          cTitle, cBoard, cResp, cDue, btnCreate, cMembers,
+          mdObj, mdAco, mdInf, cG, cU, cT, btnAI
+        ].forEach(el => el && (el.disabled = !canEdit));
         msg.textContent = canEdit ? '' : 'Entre com sua conta para criar cards.';
       }
       paintCreatePermissions();
       document.addEventListener('auth:changed', paintCreatePermissions);
 
-      // valor padrão da descrição ao abrir a tela de criação
-      if (!cDesc.value?.trim()) {
-        cDesc.value = DEFAULT_CARD_DESC;
-      }
-
-
-
+      // ===== Usuários para Responsável/Membros =====
       let unsubUsersForCreate = null;
-
       async function bindUsersToCreate() {
-        // limpa listener anterior se houver
         try { unsubUsersForCreate && unsubUsersForCreate(); } catch { }
         unsubUsersForCreate = null;
 
-        // OFFLINE/FALLBACK — tenta usar a lista local "members" ou cai para ALL_RESP
         if (!cloudOk) {
           try {
             const arr = (await Members.list()).filter(m => (m.role || 'editor') !== 'viewer');
@@ -2091,8 +2098,6 @@ Contexto:
           }
         }
 
-        // ONLINE (Firestore)
-        // ONLINE (Firestore)
         const { collection, onSnapshot, orderBy, query } =
           await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
 
@@ -2107,24 +2112,19 @@ Contexto:
             users.push({ uid, label, role: u.role || 'editor' });
           });
 
-          // value = uid; data-label = nome para exibir/salvar
           cResp.innerHTML = users.map(u =>
             `<option value="${u.uid}" data-label="${u.label}">${u.label}</option>`
           ).join('');
 
-          // Membros (salvamos UIDs)
           cMembers.innerHTML = users.map(u =>
             `<option value="${u.uid}">${u.label}</option>`
           ).join('');
         });
-
       }
-
-      // atualiza quando logar/deslogar e na carga inicial
       document.addEventListener('auth:changed', bindUsersToCreate);
       bindUsersToCreate();
 
-
+      // Rotina: mostra bloco só no board ROTINA
       const rtBlock = $('#rt-block');
       function toggleRtBlock() {
         rtBlock.classList.toggle('hidden', cBoard.value !== 'ROTINA');
@@ -2132,40 +2132,106 @@ Contexto:
       toggleRtBlock();
       cBoard.addEventListener('change', toggleRtBlock);
 
+      // ======= Modelo → Descrição + Checklist =======
+      function buildDescFromModel() {
+        const obj = (mdObj.value || '').trim();
+        const aco = (mdAco.value || '').trim();
+        const inf = (mdInf.value || '').trim();
 
-      let createChecklistBuffer = [];
+        return `TAREFA QUE DEVE SER FEITA
+${aco || 'Descrever todas as ações que devem ser aplicadas para a execução e entrega da tarefa, com excelência.'}
 
-      btnAI.addEventListener('click', async () => {
+OBJETIVO DA TAREFA
+${obj || 'Descrever qual é a razão da execução desta tarefa e qual o resultado esperado.'}
+
+INFORMAÇÕES ADICIONAIS
+${inf || 'Listar todas as informações pertinentes que contribuam para a ação mais efetiva e assertiva em sua execução.'}`;
+      }
+
+      function basicChecklistFromModel() {
+        const base = (mdAco.value || '')
+          .split(/[,;|\n]+/)        // vírgulas, ponto-e-vírgula, | ou quebras de linha
+          .map(s => s.trim())
+          .filter(Boolean);
+
+        const extras = [];
+        if (mdObj.value?.trim()) extras.push('Validar objetivo com o solicitante');
+        if (mdInf.value?.trim()) extras.push('Revisar informações adicionais e links');
+
+        const defaults = [
+          'Definir escopo e entregáveis',
+          'Estabelecer prazo e responsável',
+        ];
+
+        // junta tudo sem duplicar (case-insensitive) e limita a 10
+        const seen = new Set();
+        const all = [...base, ...extras, ...defaults]
+          .filter(t => { const k = t.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; })
+          .slice(0, 10);
+
+        return all.map(t => ({ text: t, done: false, createdAt: new Date().toISOString() }));
+      }
+
+      function setDescAndPreview(items) {
+        // Preenche descrição oculta
+        cDesc.value = buildDescFromModel();
+
+        // Render preview checklist
+        const buf = items.slice(); // cópia
+        renderChecklistUI(cChecklistWrap, buf, {
+          readonly: false,
+          onToggle: (idx) => {
+            buf[idx].done = !buf[idx].done;
+            setDescAndPreview(buf);
+          }
+        });
+        setDescAndPreview._buffer = buf;
+      }
+
+      // Atualiza preview/descrição ao digitar
+      function renderModelPreview() {
+        setDescAndPreview(basicChecklistFromModel());
+      }
+      ['input', 'change'].forEach(ev => {
+        mdObj.addEventListener(ev, renderModelPreview);
+        mdAco.addEventListener(ev, renderModelPreview);
+        mdInf.addEventListener(ev, renderModelPreview);
+      });
+      // primeira renderização
+      renderModelPreview();
+
+      // ======= IA: gerar checklist com Groq =======
+      btnAI?.addEventListener('click', async () => {
         const title = (cTitle.value || '').trim();
-        const desc = (cDesc.value || '').trim();
-        const board = cBoard.value;
         if (!title) { setMsg(msg, 'err', 'Informe o título antes de gerar a checklist.'); return; }
 
-        setMsg(msg, 'ok', 'Gerando checklist…');
-        const items = await generateChecklistGroq({ title, desc, board });
+        const board = cBoard.value;
+        const desc = buildDescFromModel(); // usa os 3 campos do modelo
+        setMsg(msg, 'ok', 'Gerando checklist com IA…');
 
-        createChecklistBuffer = items.map(t => ({
-          text: t,
-          done: false,
-          createdAt: new Date().toISOString()
-        }));
+        // chame o gerador Groq padrão (já presente no seu código)
+        const aiItems = await generateChecklistGroq({ title, desc, board });
 
-        // define once so we can reuse on toggle:
-        function updatePreview() {
-          renderChecklistUI(cChecklistWrap, createChecklistBuffer, {
-            readonly: false,
-            onToggle: (idx) => {
-              const it = createChecklistBuffer[idx];
-              if (it) { it.done = !it.done; updatePreview(); }
-            }
-          });
-        }
-        updatePreview();
+        // mescla IA + básicos, sem duplicar
+        const basic = basicChecklistFromModel().map(i => i.text);
+        const merged = [];
+        const seen = new Set();
 
-        setMsg(msg, 'ok', 'Checklist gerada.');
+        [...aiItems, ...basic].forEach(t => {
+          const k = String(t).trim();
+          if (!k) return;
+          const l = k.toLowerCase().replace(/\s+/g, ' ');
+          if (seen.has(l)) return;
+          seen.add(l);
+          merged.push({ text: k, done: false, createdAt: new Date().toISOString() });
+        });
+
+        // limita a 10 itens
+        setDescAndPreview(merged.slice(0, 10));
+        setMsg(msg, 'ok', 'Checklist gerada pela IA.');
       });
 
-
+      // ===== Criar card =====
       btnCreate.addEventListener('click', async () => {
         const title = (cTitle.value || '').trim();
         if (!title) { setMsg(msg, 'err', 'Informe o título.'); return; }
@@ -2176,10 +2242,8 @@ Contexto:
         const isRotinaBoard = (cBoard.value === 'ROTINA');
         const rtEnabledSel = $('#c-rt-enabled');
         const rtKindSel = $('#c-rt-kind');
-
         const isRotinaOn = isRotinaBoard && rtEnabledSel && (rtEnabledSel.value === 'on');
 
-        // se rotina estiver ligada, precisamos de um prazo de partida
         if (isRotinaOn && !dueIso) {
           setMsg(msg, 'err', 'Para rotina, defina um prazo inicial (data/hora).');
           return;
@@ -2199,56 +2263,40 @@ Contexto:
         const priority = computePriority(dueIso, gut);
         const gutGrade = gutClass(gut);
 
+        // Descrição + checklist do buffer atual (IA ou básica)
+        const desc = cDesc.value || buildDescFromModel();
+        const checklistItems = setDescAndPreview._buffer || basicChecklistFromModel();
 
         const rec = await Cards.add({
           title,
           board: cBoard.value,
-          resp: respLabel,         // mantém compat com sua UI atual
-          respUid,                 // <- novo campo
+          resp: respLabel,          // compat com UI atual
+          respUid,
           gut, gutGrade, priority,
           due: dueIso,
-          desc: cDesc.value,
+          desc,
           routine,
           members
         });
 
-        if (createChecklistBuffer.length) {
-          for (const it of createChecklistBuffer) {
+        if (checklistItems.length) {
+          for (const it of checklistItems) {
             await Sub.addChecklistItem(rec.id, it.text, it.done);
           }
         }
 
-
         setMsg(msg, 'ok', '✅ Card criado!');
+        // reset mínimos
         cTitle.value = '';
-        cDesc.value = DEFAULT_CARD_DESC; // mantém o template para o próximo card
         cDue.value = '';
-        createChecklistBuffer = [];
-        cChecklistWrap.innerHTML = '<div class="muted">Sem itens</div>';
-        createChecklistBuffer = [];
-        cChecklistWrap.innerHTML = '<div class="muted">Sem itens</div>';
-
-        // foca no board da aba clicada
+        mdObj.value = ''; mdAco.value = ''; mdInf.value = '';
+        setDescAndPreview._buffer = null;
+        renderModelPreview();                      // refaz preview vazio
         selectBoardTab(rec.board);
       });
-      $('#md-aplicar')?.addEventListener('click', () => {
-        const o = ($('#md-objetivo').value || '').trim();
-        const a = ($('#md-acoes').value || '').trim();
-        const i = ($('#md-info').value || '').trim();
-
-        const desc = `TAREFA QUE DEVE SER FEITA
-${a || 'Descrever todas as ações que devem ser aplicadas...'}
-
-OBJETIVO DA TAREFA
-${o || 'Descrever qual é a razão da execução desta tarefa e qual o resultado esperado.'}
-
-INFORMAÇÕES ADICIONAIS
-${i || 'Listar informações que contribuam para a execução.'}`;
-
-        $('#c-desc').value = desc;
-      });
-
     })();
+
+
 
     /* ===========================
        Kanbans (3 abas), KPIs, Modal, Drag
@@ -2359,15 +2407,28 @@ ${i || 'Listar informações que contribuam para a execução.'}`;
       const btnClose = $('#m-close'), btnSave = $('#m-save'), btnDelete = $('#m-delete');
 
       // popula responsável+membros no modal
+      // ==== cache global p/ modal ====
+      let usersCache = []; // [{uid, label}]
+      let pendingModalSelection = null;
+      // { respUid: string|null, respLabel: string|null, memberUids: string[], memberLabels: string[] }
+
       async function bindUsersToEdit() {
+        // fallback local (sem cloud)
         if (!cloudOk) {
-          mResp.innerHTML = ALL_RESP.map(n => `<option value="${n}" data-label="${n}">${n}</option>`).join('');
-          mMembers.innerHTML = '';
+          const opts = ALL_RESP.map(n => `<option value="${n}" data-label="${n}">${n}</option>`).join('');
+          mResp.innerHTML = opts;
+          mMembers.innerHTML = ''; // sem base local de membros
+          usersCache = ALL_RESP.map(n => ({ uid: n, label: n }));
+          // aplica seleção pendente, se houver
+          applyPendingSelection();
           return;
         }
+
         const { collection, onSnapshot, orderBy, query } =
           await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+
         const qRef = query(collection(db, 'users'), orderBy('name', 'asc'));
+
         onSnapshot(qRef, (snap) => {
           const users = [];
           snap.forEach(d => {
@@ -2377,10 +2438,66 @@ ${i || 'Listar informações que contribuam para a execução.'}`;
             const label = u.name || u.email || uid;
             users.push({ uid, label });
           });
-          mResp.innerHTML = users.map(u => `<option value="${u.uid}" data-label="${u.label}">${u.label}</option>`).join('');
-          mMembers.innerHTML = users.map(u => `<option value="${u.uid}">${u.label}</option>`).join('');
+
+          usersCache = users.slice();
+
+          // popular selects
+          mResp.innerHTML = usersCache
+            .map(u => `<option value="${u.uid}" data-label="${u.label}">${u.label}</option>`)
+            .join('');
+
+          mMembers.innerHTML = usersCache
+            .map(u => `<option value="${u.uid}">${u.label}</option>`)
+            .join('');
+
+          // tentar aplicar qualquer seleção que o modal tenha pedido
+          applyPendingSelection();
         });
       }
+
+      // aplica seleção pendente no modal (responsável e membros)
+      function applyPendingSelection() {
+        if (!pendingModalSelection) return;
+        const { respUid, respLabel, memberUids, memberLabels } = pendingModalSelection;
+
+        // RESPONSÁVEL
+        let appliedResp = false;
+        if (respUid && mResp.querySelector(`option[value="${respUid}"]`)) {
+          mResp.value = respUid;
+          appliedResp = true;
+        } else if (respLabel) {
+          // tenta casar por label (caso legado)
+          const opt = Array.from(mResp.options).find(o => (o.dataset.label || o.textContent) === respLabel);
+          if (opt) { mResp.value = opt.value; appliedResp = true; }
+        }
+
+        // se ainda não deu, adiciona uma opção “fantasma” só para exibir
+        if (!appliedResp && (respUid || respLabel)) {
+          const val = respUid || `legacy_${Date.now()}`;
+          const lab = respLabel || respUid || '—';
+          const ghost = document.createElement('option');
+          ghost.value = val;
+          ghost.dataset.label = lab;
+          ghost.textContent = `${lab} (não cadastrado)`;
+          mResp.appendChild(ghost);
+          mResp.value = val;
+        }
+
+        // MEMBROS
+        const want = new Set(memberUids || []);
+        // também aceita labels legadas
+        const wantLabels = new Set((memberLabels || []).map(s => String(s).trim()));
+
+        Array.from(mMembers.options).forEach(o => {
+          const byUid = want.has(o.value);
+          const byLabel = wantLabels.has(o.textContent) || wantLabels.has(o.dataset?.label || '');
+          o.selected = byUid || byLabel;
+        });
+
+        // limpa o pendente
+        pendingModalSelection = null;
+      }
+
       bindUsersToEdit();
 
       // ===== Estado/Kanban =====
@@ -2669,11 +2786,66 @@ ${i || 'Listar informações que contribuam para a execução.'}`;
 
         mStatus.innerHTML = boardFlow(card.board).map(s => `<option ${s === card.status ? 'selected' : ''}>${s}</option>`).join('');
 
-        if (cloudOk && card.respUid) mResp.value = card.respUid; else mResp.value = '';
+        /* ========= RESPONSÁVEL & MEMBROS (robusto ao async) ========= */
+        // o que queremos selecionar (aceita UID e/ou label legado)
+        const desiredRespUid = (cloudOk && card.respUid) ? String(card.respUid) : null;
+        const desiredRespLabel = (card.resp || '').trim() || null;
 
-        if (Array.isArray(card.members)) {
-          Array.from(mMembers.options).forEach(o => { o.selected = card.members.includes(o.value); });
+        const desiredMemberUids = Array.isArray(card.members)
+          ? card.members.map(x => String(x))
+          : [];
+        // caso “legado” (membros salvos como nomes/emails), também tentamos por label:
+        const desiredMemberLabels = Array.isArray(card.members)
+          ? card.members.map(x => String(x).trim())
+          : [];
+
+        function applyRespAndMembers() {
+          // só aplica quando os <option> já existem
+          if (mResp.options.length === 0 || mMembers.options.length === 0) return false;
+
+          // --- responsável
+          let appliedResp = false;
+          if (desiredRespUid) {
+            const optByVal = Array.from(mResp.options).find(o => o.value === desiredRespUid);
+            if (optByVal) { mResp.value = optByVal.value; appliedResp = true; }
+          }
+          if (!appliedResp && desiredRespLabel) {
+            const optByLabel = Array.from(mResp.options).find(o => {
+              const lbl = (o.dataset?.label || o.textContent || '').trim();
+              return lbl === desiredRespLabel;
+            });
+            if (optByLabel) { mResp.value = optByLabel.value; appliedResp = true; }
+          }
+          // se não encontrou, cria uma opção “fantasma” pra mostrar algo coerente
+          if (!appliedResp && (desiredRespUid || desiredRespLabel)) {
+            const ghost = document.createElement('option');
+            ghost.value = desiredRespUid || `legacy_${Date.now()}`;
+            ghost.dataset.label = desiredRespLabel || desiredRespUid || '—';
+            ghost.textContent = `${ghost.dataset.label} (não cadastrado)`;
+            mResp.appendChild(ghost);
+            mResp.value = ghost.value;
+          }
+
+          // --- membros (marca por UID e também por label legado)
+          const wantUids = new Set(desiredMemberUids);
+          const wantLabels = new Set(desiredMemberLabels);
+          Array.from(mMembers.options).forEach(o => {
+            const lbl = (o.dataset?.label || o.textContent || '').trim();
+            o.selected = wantUids.has(o.value) || (lbl && wantLabels.has(lbl));
+          });
+
+          return true;
         }
+
+        // tenta aplicar agora; se ainda não deu, re-tenta algumas vezes até as opções chegarem
+        if (!applyRespAndMembers()) {
+          let tries = 0;
+          const t = setInterval(() => {
+            tries++;
+            if (applyRespAndMembers() || tries >= 25) clearInterval(t); // ~3s total @120ms
+          }, 120);
+        }
+        /* ========= /RESP/MEM ========= */
 
         const r = card.routine || { enabled: false };
         if (mRtEnabled) mRtEnabled.value = r.enabled ? 'on' : 'off';
@@ -2694,20 +2866,20 @@ ${i || 'Listar informações que contribuam para a execução.'}`;
         if (unsubA) unsubA(); if (unsubCL) unsubCL();
         unsubA = Sub.listenAttachments(card.id, (arr) => {
           mAttach.innerHTML = (arr || []).map(a => `
-        <div class="comment">
-          <a href="${a.url}" target="_blank">${a.url}</a>
-          <div class="meta">${new Date(a.createdAt || Date.now()).toLocaleString('pt-BR')} · ${a.authorName || a.author || '—'}</div>
-        </div>
-      `).join('') || '<div class="muted">Sem anexos</div>';
+      <div class="comment">
+        <a href="${a.url}" target="_blank">${a.url}</a>
+        <div class="meta">${new Date(a.createdAt || Date.now()).toLocaleString('pt-BR')} · ${a.authorName || a.author || '—'}</div>
+      </div>
+    `).join('') || '<div class="muted">Sem anexos</div>';
         });
 
         unsubCL = Sub.listenChecklist(card.id, (arr) => {
           mChecklist.innerHTML = (arr || []).map((it, i) => `
-        <label style="display:flex;gap:8px;align-items:center;margin:6px 0">
-          <input type="checkbox" data-id="${it.id || i}" ${it.done ? 'checked' : ''}/>
-          <span ${it.done ? 'style="text-decoration:line-through;opacity:.8"' : ''}>${it.text}</span>
-        </label>
-      `).join('') || '<div class="muted">Sem itens</div>';
+      <label style="display:flex;gap:8px;align-items:center;margin:6px 0">
+        <input type="checkbox" data-id="${it.id || i}" ${it.done ? 'checked' : ''}/>
+        <span ${it.done ? 'style="text-decoration:line-through;opacity:.8"' : ''}>${it.text}</span>
+      </label>
+    `).join('') || '<div class="muted">Sem itens</div>';
 
           mChecklist.querySelectorAll('input[type="checkbox"]').forEach((ch, idx) => {
             ch.onchange = () => {
@@ -2723,6 +2895,7 @@ ${i || 'Listar informações que contribuam para a execução.'}`;
         back.classList.add('show');
         modal.classList.add('show');
       }
+
 
       function closeModal() {
         modalId = null;
@@ -2764,10 +2937,13 @@ ${i || 'Listar informações que contribuam para a execução.'}`;
         let respUid = null, respLabel = '';
         if (cloudOk) {
           respUid = mResp.value || null;
-          respLabel = mResp.selectedOptions[0]?.dataset?.label || '';
+          respLabel = mResp.selectedOptions[0]?.dataset?.label
+            || mResp.selectedOptions[0]?.textContent
+            || '';
         } else {
           respLabel = mResp.value || '';
         }
+
 
         const members = Array.from(mMembers.selectedOptions || []).map(o => o.value);
         const routine = (mRtEnabled?.value === 'on')
@@ -3592,6 +3768,5 @@ ${i || 'Listar informações que contribuam para a execução.'}`;
     })();
   </script>
 </body>
-
 
 </html>
