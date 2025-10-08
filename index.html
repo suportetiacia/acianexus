@@ -1,0 +1,3596 @@
+<!doctype html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ACIANexus • Kanbans</title>
+  <!-- Charts e Excel (XLSX) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <link rel="shortcut icon" type="image/png" href="img\logoacianexus.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+    rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #0f172a;
+      --surface: #111827;
+      --muted: #9db1d8;
+      --border: #1f2a44;
+      --text: #e6eefc;
+      --text-muted: #b9c7e6;
+      --primary: #10789e;
+      --primary-600: #19657c;
+      --primary-700: #166d88;
+      --accent: #30537e;
+      --success: #22c55e;
+      --error: #ef4444;
+      --warn: #f59e0b;
+      --focus-ring: 0 0 0 4px rgba(59, 130, 246, .25);
+      --ring: #334155;
+      --shadow-lg: 0 12px 30px rgba(2, 6, 23, .35);
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    .brand-logo {
+      height: 28px;
+      /* ajuste se quiser maior/menor */
+      width: auto;
+      display: block;
+    }
+
+    /* ---------- Responsividade geral ---------- */
+    @media (max-width: 900px) {
+      .grid.cols-3 {
+        grid-template-columns: 1fr;
+      }
+
+      .kpis {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+      }
+
+      .columns {
+        grid-template-columns: repeat(1, minmax(270px, 1fr));
+      }
+
+      header .nav {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+    }
+
+    /* ---------- Cabeçalho do card (título “box”) por GUT ---------- */
+    .card-item .title {
+      font-weight: 700;
+      padding: 6px 8px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .gut-a {
+      background: rgba(239, 68, 68, .20);
+      border: 1px solid rgba(239, 68, 68, .55);
+    }
+
+    /* A – vermelho */
+    .gut-b {
+      background: rgba(245, 158, 11, .18);
+      border: 1px solid rgba(245, 158, 11, .55);
+    }
+
+    /* B – amarelo */
+    .gut-c {
+      background: rgba(34, 197, 94, .18);
+      border: 1px solid rgba(34, 197, 94, .55);
+    }
+
+    /* C – verde */
+
+    /* ---------- Bordas por prazo ---------- */
+    .card-item.border-ok {
+      border: 1px solid rgba(96, 165, 250, .45);
+    }
+
+    /* azul */
+    .card-item.border-warn {
+      border: 1px solid rgba(245, 158, 11, .75);
+    }
+
+    /* laranja (<= 3h) */
+    .card-item.border-danger {
+      border: 1px solid rgba(239, 68, 68, .85);
+    }
+
+    /* vermelho (muito perto/atrasado) */
+
+    /* Badge geral reaproveitável */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(96, 165, 250, .25);
+      background: rgba(59, 130, 246, .08);
+      font-size: 12px;
+      color: #cfe0ff;
+    }
+
+
+
+    html,
+    body {
+      height: 100%;
+      font-family: "Montserrat", sans-serif;
+    }
+
+    /* Fundo padrão ACIA Nexus */
+    body {
+      margin: 0;
+      font-family: "Montserrat", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial;
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(59, 130, 246, .12), transparent 60%),
+        radial-gradient(800px 400px at 120% 10%, rgba(29, 78, 216, .10), transparent 70%),
+        url("img/backgroundacianexus.png") center top / cover no-repeat;
+      /* torna todas as camadas “fixas” (uma por camada) */
+      background-attachment: fixed, fixed, fixed;
+      color: var(--text);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+
+    /* Evita jank em mobile: desliga o fixed em telas pequenas */
+    @media (max-width: 900px) {
+      body {
+        background:
+          radial-gradient(1200px 600px at 20% -10%, rgba(59, 130, 246, .12), transparent 60%),
+          radial-gradient(800px 400px at 120% 10%, rgba(29, 78, 216, .10), transparent 70%),
+          linear-gradient(180deg, rgba(0, 0, 0, .55) 0%, rgba(0, 0, 0, .25) 40%, rgba(0, 0, 0, .15) 100%),
+          url("img/backgroundacianexus.png") center top / cover no-repeat;
+      }
+    }
+
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(8px) saturate(1.2);
+      background: linear-gradient(180deg, rgba(15, 23, 42, .85), rgba(15, 23, 42, .65));
+      border-bottom: 1px solid rgba(96, 165, 250, .12);
+    }
+
+    .nav {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px
+    }
+
+    .brand {
+      font-weight: 800;
+      letter-spacing: .4px
+    }
+
+    .spacer {
+      flex: 1
+    }
+
+    .nav a {
+      color: var(--text);
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid transparent
+    }
+
+    .auth-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 10px;
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 8px;
+      margin: 10px 0 14px;
+    }
+
+    .auth-tab {
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(96, 165, 250, .22);
+      background: rgba(15, 23, 42, .6);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .auth-tab.active {
+      background: rgba(59, 130, 246, .18);
+      border-color: rgba(96, 165, 250, .4);
+    }
+
+    .auth-pane .field:not(:last-child) {
+      margin-bottom: 10px;
+    }
+
+
+    .nav a:hover {
+      background: rgba(59, 130, 246, .12);
+      border-color: rgba(59, 130, 246, .22)
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(37, 99, 235, .12);
+      border: 1px solid rgba(59, 130, 246, .35);
+      color: #cfe0ff;
+      font-size: 12px
+    }
+
+    .btn {
+      appearance: none;
+      background: linear-gradient(180deg, var(--primary), var(--primary-600));
+      color: #081226;
+      border: 1px solid rgba(37, 99, 235, .35);
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, .35)
+    }
+
+    .btn.secondary {
+      background: linear-gradient(180deg, rgba(30, 41, 59, .7), rgba(30, 41, 59, .55));
+      color: var(--text);
+      border: 1px solid rgba(96, 165, 250, .18)
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 18px auto;
+      padding: 0 20px 28px
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(15, 23, 42, .85), rgba(15, 23, 42, .7));
+      border: 1px solid rgba(96, 165, 250, .15);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: var(--shadow-lg)
+    }
+
+    .muted {
+      color: var(--text-muted)
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px
+    }
+
+    .grid.cols-3 {
+      grid-template-columns: repeat(3, 1fr)
+    }
+
+    @media (max-width:900px) {
+      .grid.cols-3 {
+        grid-template-columns: 1fr
+      }
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px
+    }
+
+    @media (max-width:680px) {
+      .row {
+        grid-template-columns: 1fr
+      }
+    }
+
+    label {
+      font-size: 13px;
+      color: var(--text-muted)
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(96, 165, 250, .22);
+      background: rgba(15, 23, 42, .65);
+      color: var(--text);
+      outline: none
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      box-shadow: var(--focus-ring);
+      border-color: var(--primary)
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical
+    }
+
+    .msg {
+      display: none;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      margin: 8px 0
+    }
+
+    .msg.show {
+      display: block
+    }
+
+    .msg.ok {
+      background: rgba(34, 197, 94, .15);
+      border: 1px solid rgba(34, 197, 94, .35)
+    }
+
+    .msg.err {
+      background: rgba(239, 68, 68, .15);
+      border: 1px solid rgba(239, 68, 68, .35)
+    }
+
+    footer {
+      color: var(--text-muted);
+      text-align: center;
+      padding: 20px 0 40px
+    }
+
+    .hidden {
+      display: none
+    }
+
+    /* HOME */
+    .hero {
+      padding: 28px;
+      display: grid;
+      gap: 14px;
+      background: linear-gradient(180deg, rgba(15, 23, 42, .85), rgba(15, 23, 42, .65));
+      border: 1px solid rgba(96, 165, 250, .15);
+      border-radius: 18px;
+      box-shadow: var(--shadow-lg)
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 34px;
+      letter-spacing: .3px
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px
+    }
+
+    .tab {
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(96, 165, 250, .22);
+      cursor: pointer;
+      user-select: none
+    }
+
+    .tab.active {
+      background: rgba(59, 130, 246, .18);
+      border-color: rgba(96, 165, 250, .4)
+    }
+
+    /* KANBAN */
+    .kanban-wrap {
+      overflow: auto
+    }
+
+    .columns {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(270px, 1fr));
+      gap: 14px;
+      min-height: 60vh
+    }
+
+    @media (max-width:1200px) {
+      .columns {
+        grid-template-columns: repeat(3, minmax(270px, 1fr))
+      }
+    }
+
+    @media (max-width:820px) {
+      .columns {
+        grid-template-columns: repeat(2, minmax(270px, 1fr))
+      }
+    }
+
+    @media (max-width:600px) {
+      .columns {
+        grid-template-columns: minmax(270px, 1fr)
+      }
+    }
+
+    .col {
+      background: rgba(15, 23, 42, .6);
+      border: 1px solid rgba(96, 165, 250, .18);
+      border-radius: 16px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column
+    }
+
+    .col h4 {
+      margin: 6px 8px 8px;
+      font-size: 14px;
+      letter-spacing: .3px;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border: 1px solid rgba(96, 165, 250, .22);
+      border-radius: 999px;
+      font-size: 12px;
+      color: #cfe0ff;
+      background: rgba(59, 130, 246, .08)
+    }
+
+    .col-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 40px;
+      padding: 6px;
+      border-radius: 12px
+    }
+
+    .col-body.drag-over {
+      outline: 2px dashed rgba(96, 165, 250, .4);
+      outline-offset: -4px
+    }
+
+    .card-item {
+      background: linear-gradient(180deg, rgba(15, 23, 42, .85), rgba(15, 23, 42, .75));
+      border: 1px solid rgba(96, 165, 250, .18);
+      border-radius: 14px;
+      padding: 10px 12px;
+      cursor: grab
+    }
+
+    /* evita qualquer vazamento do conteúdo do card */
+    .card-item {
+      overflow: hidden;
+    }
+
+    /* título como grid: texto à esquerda (quebra), badges à direita */
+    .card-item .title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      font-weight: 700;
+      flex-wrap: wrap;
+      /* permite jogar badges para a linha de baixo */
+    }
+
+    /* badges não quebram e não expandem o grid */
+    .card-item .title .badge {
+      white-space: nowrap;
+    }
+
+    .card-item .title-text {
+      flex: 1 1 auto;
+      min-width: 160px;
+      /* evita quebrar cada letra em colunas estreitas */
+      line-height: 1.2;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      /* CLAMP: 2 linhas */
+      -webkit-box-orient: vertical;
+    }
+
+    /* grupo de badges (GUT/PRI) */
+    .card-item .title-badges {
+      display: flex;
+      gap: 6px;
+      flex: 0 0 auto;
+      white-space: nowrap;
+      /* badges em uma linha */
+    }
+
+    /* em telas estreitas, joga badges pra baixo e alinha à esquerda */
+    @media (max-width:520px) {
+      .card-item .title-badges {
+        width: 100%;
+        justify-content: flex-start;
+      }
+    }
+
+
+
+    /* quando a coluna ficar mais estreita, joga os badges para baixo */
+    @media (max-width: 520px) {
+      .card-item .title {
+        grid-template-columns: 1fr;
+        /* texto em cima */
+        row-gap: 6px;
+      }
+
+      .card-item .title .badge {
+        justify-self: start;
+        /* badges abaixo/alinhados à esquerda */
+      }
+    }
+
+
+    .card-item:active {
+      cursor: grabbing
+    }
+
+    .card-item .meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 6px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--text-muted)
+    }
+
+    .due.over {
+      color: #ef4444
+    }
+
+    /* KPIs */
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      gap: 10px;
+      margin-bottom: 10px
+    }
+
+    .kpi-card {
+      background: rgba(15, 23, 42, .6);
+      border: 1px solid rgba(96, 165, 250, .18);
+      border-radius: 14px;
+      padding: 10px
+    }
+
+    .kpi-title {
+      font-size: 12px;
+      color: var(--text-muted)
+    }
+
+    .kpi-val {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: .3px
+    }
+
+    /* Modal */
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, .6);
+      backdrop-filter: blur(4px);
+      display: none;
+      z-index: 60
+    }
+
+    .backdrop.show {
+      display: block
+    }
+
+    /* Modal com layout flexível e rolável no corpo */
+    .modal {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: min(820px, 92vw);
+      max-height: 90vh;
+      /* evita estourar a viewport */
+      display: grid;
+      /* cabeçalho | body rolável | rodapé */
+      grid-template-rows: auto 1fr auto;
+      background: linear-gradient(180deg, rgba(15, 23, 42, .95), rgba(15, 23, 42, .8));
+      border: 1px solid rgba(96, 165, 250, .2);
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
+      z-index: 70;
+      overflow: hidden;
+      /* bordas arredondadas + scroll interno */
+      display: none;
+    }
+
+    .modal.show {
+      display: grid;
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px;
+      border-bottom: 1px solid rgba(96, 165, 250, .14)
+    }
+
+    /* corpo do modal vira a área rolável */
+    .modal-body {
+      padding: 16px 18px;
+      display: grid;
+      gap: 12px;
+      overflow: auto;
+      /* rolável no conteúdo, não na página */
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-foot {
+      padding: 12px 18px;
+      border-top: 1px solid rgba(96, 165, 250, .14);
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      flex-wrap: wrap
+    }
+
+    .modal .cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px
+    }
+
+    /* Encurta paddings e ajusta grid no mobile */
+    @media (max-width: 700px) {
+      .modal {
+        width: 96vw;
+        max-height: 92vh;
+      }
+
+      .modal-head {
+        padding: 12px 14px;
+      }
+
+      .modal-body {
+        padding: 12px 14px;
+        gap: 10px;
+      }
+
+      .modal-foot {
+        padding: 10px 14px;
+      }
+
+      /* já existe a quebra das cols no seu CSS, reforço tipográfico: */
+      .modal .cols {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      label {
+        font-size: 12px;
+      }
+
+      input,
+      select,
+      textarea {
+        padding: 10px 12px;
+      }
+    }
+
+    /* Evita estouro de linha em anexos/URLs longas e comentários */
+    #m-attachments .comment a {
+      word-break: break-all;
+    }
+
+    @media (max-width:700px) {
+      .modal .cols {
+        grid-template-columns: 1fr
+      }
+    }
+
+    .comment {
+      border: 1px solid rgba(96, 165, 250, .18);
+      border-radius: 10px;
+      padding: 8px;
+      margin-bottom: 8px;
+      background: rgba(15, 23, 42, .5)
+    }
+
+    .comment .meta {
+      font-size: 12px;
+      color: var(--text-muted)
+    }
+
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--primary);
+    }
+
+    input[type="checkbox"]:focus {
+      box-shadow: var(--focus-ring);
+    }
+
+    /* Dá respiro visual na lista da checklist dentro do modal */
+    #m-checklist {
+      padding-right: 6px;
+      /* espaço pro scroll não cobrir o texto */
+    }
+
+    #m-checklist label {
+      background: rgba(15, 23, 42, .35);
+      border: 1px solid rgba(96, 165, 250, .12);
+      border-radius: 10px;
+      padding: 6px 10px;
+    }
+
+    .card-item.soon {
+      background: linear-gradient(180deg, rgba(245, 158, 11, .18), rgba(245, 158, 11, .10));
+      border-color: rgba(245, 158, 11, .45);
+    }
+
+    .card-item.overdue {
+      background: linear-gradient(180deg, rgba(239, 68, 68, .22), rgba(239, 68, 68, .12));
+      border-color: rgba(239, 68, 68, .50);
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <nav class="nav">
+        <img src="img/logoacianexus.png" alt="ACIA Nexus" class="brand-logo">
+      <a href="#/" data-link>Home</a>
+      <a href="#/criar" data-link>Criar</a>
+      <a href="#/kanban" data-link>Kanbans</a>
+      <a href="#/indicadores" data-link>Indicadores</a>
+      <a href="#/reportar" data-link>Reportar problema</a>
+      <div class="spacer"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+          <!-- <button id="mu-open" class="btn hidden" type="button">Novo comunicado</button> -->
+          <a id="members-open" class="hidden" href="#/membros" data-link>Membros</a>
+      </div>
+      <span class="chip" id="authChip">Offline</span>
+      <button id="btnLogin" class="btn secondary" type="button">Entrar</button>
+      <button id="btnLogout" class="btn secondary hidden" type="button">Sair</button>
+
+    </nav>
+  </header>
+
+  <main class="container">
+    <!-- HOME -->
+    <section id="view-home" class="grid" style="grid-template-columns: 1fr; gap: 24px">
+      <!-- <div class="hero">
+        <div class="chip" style="width:max-content">Central ACIA</div>
+        <h1>ACIA Ops — Central de Operações</h1>
+        <p class="muted" style="font-size:16px;margin:0">
+          Mural interno de comunicação + atalhos rápidos.
+        </p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+          <a class="btn" href="#/kanban">Abrir Kanbans</a>
+          <a class="btn secondary" href="#/reportar">Reportar bug</a>
+          <a class="btn secondary" href="#/indicadores">Indicadores</a>
+        </div>
+      </div> -->
+
+      <!-- Mural informativo -->
+      <div class="card" style="display:grid; gap:12px">
+        <h2 style="margin:0">Mural de Informações</h2>
+        <p class="muted" style="margin:0">Comunicados gerais para todos os colaboradores.</p>
+
+        <div id="mural-list" style="display:flex;flex-direction:column;gap:10px"></div>
+
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button id="mu-open" class="btn hidden" type="button">Novo comunicado</button>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- AUTH -->
+    <section id="view-auth" class="hidden">
+      <div class="card" style="max-width:620px;margin:0 auto">
+        <div class="auth-head">
+          <h2 style="margin:0">Acessar a Central</h2>
+        </div>
+
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="auth-tab-login" type="button">Entrar</button>
+          <button class="auth-tab" id="auth-tab-register" type="button">Criar conta</button>
+        </div>
+
+        <!-- LOGIN -->
+        <form id="loginForm" class="auth-pane">
+          <div class="field">
+            <label for="auth-login-email">E-mail ACIA</label>
+            <input id="auth-login-email" type="email" placeholder="seu.nome@acia.com.br" required />
+          </div>
+          <div class="field">
+            <label for="auth-login-pass">Senha</label>
+            <input id="auth-login-pass" type="password" placeholder="••••••••" required />
+          </div>
+          <div class="muted" style="font-size:12px;margin:6px 0">
+            <a id="auth-forgot" href="#" style="color:var(--accent)">Esqueci minha senha</a>
+          </div>
+
+          <div id="auth-login-msg" class="msg"></div>
+          <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
+            <button id="auth-login-btn" class="btn" type="submit">Entrar</button>
+            <button class="btn secondary" type="button" id="auth-to-register">Criar conta</button>
+          </div>
+        </form>
+
+        <!-- REGISTER -->
+        <form id="registerForm" class="auth-pane hidden">
+          <div class="field">
+            <label for="auth-reg-name">Seu nome</label>
+            <input id="auth-reg-name" required type="text" placeholder="Ex.: Maria Silva" />
+          </div>
+          <div class="field">
+            <label for="auth-reg-email">E-mail ACIA</label>
+            <input id="auth-reg-email" type="email" placeholder="seu.nome@acia.com.br" required />
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="auth-reg-pass">Senha</label>
+              <input id="auth-reg-pass" type="password" placeholder="mín. 6 caracteres" required />
+            </div>
+            <div class="field">
+              <label for="auth-reg-pass2">Confirmar senha</label>
+              <input id="auth-reg-pass2" type="password" placeholder="repita a senha" required />
+            </div>
+          </div>
+
+          <div id="auth-reg-msg" class="msg"></div>
+          <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
+            <button id="auth-reg-btn" class="btn" type="submit">Criar conta</button>
+            <button class="btn secondary" type="button" id="auth-to-login">Já tenho conta</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+
+    <section id="view-create" class="hidden">
+      <div class="card" style="max-width:900px;margin:0 auto">
+        <h2 style="margin:0 0 10px">Criar Card</h2>
+
+        <div class="row">
+          <div class="field">
+            <label for="c-title">Título</label>
+            <input id="c-title" type="text" placeholder="Ex.: Planejar ações para a campanha X" />
+          </div>
+          <div class="field">
+            <label for="c-board">Kanban</label>
+            <select id="c-board">
+              <option value="PLANEJAMENTO">Planejamento</option>
+              <option value="ROTINA">Rotina</option>
+              <option value="EVENTOS">Eventos</option>
+              <option value="COMERCIAL">Comercial</option>
+              <!--<option value="COMPRAS">Compras</option>-->
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="c-resp">Responsável</label>
+            <select id="c-resp"></select>
+          </div>
+          <div class="field">
+            <label for="c-due">Prazo</label>
+            <input id="c-due" type="datetime-local" />
+          </div>
+        </div>
+        <div class="card" style="margin:12px 0 14px">
+          <h3 style="margin:0 0 8px">GUT (1–5)</h3>
+          <div class="row">
+            <div class="field">
+              <label for="c-g">Gravidade (G)</label>
+              <input id="c-g" type="number" min="1" max="5" value="5" />
+            </div>
+            <div class="field">
+              <label for="c-u">Urgência (U)</label>
+              <input id="c-u" type="number" min="1" max="5" value="5" />
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="c-t">Tendência (T)</label>
+              <input id="c-t" type="number" min="1" max="5" value="5" />
+            </div>
+            <div class="field">
+              <label>Resultado (G×U×T)</label>
+              <input id="c-gut" type="text" disabled value="125" />
+            </div>
+          </div>
+        </div>
+
+        <!-- MEMBROS DO CARD -->
+        <div class="row">
+          <div class="field" style="grid-column: 1 / -1">
+            <label for="c-members">Membros do card (multi)</label>
+            <select id="c-members" multiple size="6"></select>
+            <div class="muted" style="font-size:12px;margin-top:6px">
+              Segure Ctrl (Windows) ou ⌘ (Mac) para selecionar vários.
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin:12px 0">
+          <h3 style="margin:0 0 8px">Descrição (modelo rápido)</h3>
+          <div class="row">
+            <div class="field">
+              <label for="md-objetivo">Objetivo</label>
+              <input id="md-objetivo" type="text" placeholder="O que se deseja alcançar?" />
+            </div>
+            <div class="field">
+              <label for="md-acoes">Ações</label>
+              <input id="md-acoes" type="text" placeholder="Principais passos/entregas" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="md-info">Informações adicionais</label>
+            <input id="md-info" type="text" placeholder="Restrições, links, contexto..." />
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button id="md-aplicar" class="btn secondary" type="button">Aplicar modelo à descrição</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="c-desc">Descrição</label>
+          <textarea id="c-desc" placeholder="Detalhe o objetivo, critérios de aceite, contexto…"></textarea>
+        </div>
+
+        <!-- ROTINA -->
+        <div id="rt-block" class="card hidden" style="margin:12px 0 14px">
+          <div class="card" style="margin:12px 0 14px">
+            <h3 style="margin:0 0 8px">Rotina (opcional)</h3>
+            <div class="row">
+              <div class="field">
+                <label for="c-rt-enabled">Ativar rotina</label>
+                <select id="c-rt-enabled">
+                  <option value="off">Desativada</option>
+                  <option value="on">Ativada</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="c-rt-kind">Periodicidade</label>
+                <select id="c-rt-kind">
+                  <option value="DAILY">Diariamente</option>
+                  <option value="WEEKLY">Semanalmente</option>
+                  <option value="BIWEEKLY">Quinzenalmente</option>
+                  <option value="MONTHLY">Mensalmente</option>
+                  <option value="MON">Toda segunda</option>
+                  <option value="TUE">Toda terça</option>
+                  <option value="WED">Toda quarta</option>
+                  <option value="THU">Toda quinta</option>
+                  <option value="FRI">Toda sexta</option>
+                </select>
+              </div>
+            </div>
+            <p class="muted" style="margin:6px 0 0;font-size:12px">
+              Quando “bater” o prazo, o card volta ao início do fluxo e o próximo prazo é calculado automaticamente.
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <h4 style="margin:10px 0 6px">Checklist (pré-criação)</h4>
+          <div id="c-checklist"></div>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
+          <button id="c-ai" class="btn secondary" type="button">Gerar checklist (Groq)</button>
+          <button id="c-create" class="btn" type="button">Criar card</button>
+          <span id="c-msg" class="msg"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- KANBANS -->
+    <section id="view-kanban" class="hidden">
+
+      <div class="card">
+        <div class="tabs" id="kb-tabs">
+          <div class="tab active" data-b="PLANEJAMENTO">Planejamento</div>
+          <div class="tab" data-b="ROTINA">Rotina</div>
+          <div class="tab" data-b="EVENTOS">Eventos</div>
+          <div class="tab" data-b="COMERCIAL">Comercial</div>
+          <!--<div class="tab" data-b="COMPRAS">Compras</div>-->
+          <div class="spacer"></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="k-resp" title="Responsável"></select>
+            <input id="k-q" type="search" placeholder="Buscar por título…" />
+            <button id="k-refresh" class="btn">Atualizar</button>
+          </div>
+        </div>
+
+        <div class="kpis" id="kpis"></div>
+
+        <div class="kanban-wrap" style="margin-top:12px">
+          <div id="columns" class="columns"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INDICADORES -->
+    <section id="view-metrics" class="hidden">
+      <div class="card">
+        <h2 style="margin:0 0 10px">Indicadores</h2>
+
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+          <select id="m-board" title="Board">
+            <option value="ALL" selected>Todos os boards</option>
+            <option value="PLANEJAMENTO">Planejamento</option>
+            <option value="ROTINA">Rotina</option>
+            <option value="EVENTOS">Eventos</option>
+            <option value="COMERCIAL">Comercial</option>
+          </select>
+
+          <select id="m-period" title="Período">
+            <option value="30" selected>Últimos 30 dias</option>
+            <option value="90">Últimos 90 dias</option>
+            <option value="365">Últimos 12 meses</option>
+            <option value="0">Todo período</option>
+          </select>
+
+          <button id="m-refresh" class="btn">Atualizar</button>
+          <div class="spacer"></div>
+          <button id="m-export" class="btn secondary">Exportar XLSX</button>
+        </div>
+
+        <div id="m-kpis" class="kpis"></div>
+
+        <div class="grid" style="grid-template-columns:1fr 1fr;gap:14px;margin-top:12px">
+          <div class="card">
+            <h3 style="margin:0 0 8px">Cards por status</h3>
+            <canvas id="chartStatus" height="220"></canvas>
+          </div>
+          <div class="card">
+            <h3 style="margin:0 0 8px">Cards por responsável</h3>
+            <canvas id="chartResp" height="220"></canvas>
+          </div>
+        </div>
+
+        <div class="grid" style="grid-template-columns:1fr;gap:14px;margin-top:12px">
+          <div class="card">
+            <h3 style="margin:0 0 8px">Cards por board</h3>
+            <canvas id="chartBoard" height="240"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- REPORTAR BUG -->
+    <section id="view-report" class="hidden">
+      <div class="card" style="max-width:780px;margin:0 auto">
+        <h1 style="margin:0 0 6px;font-size:24px">Reportar um problema</h1>
+        <p class="muted" style="margin:0 0 16px">Explique com suas palavras. Leva menos de 1 minuto. 🙂</p>
+        <div id="msg-ok" class="msg ok">✅ Obrigado! Seu relato foi enviado ao time.</div>
+        <div id="msg-err" class="msg err">⚠️ Não foi possível enviar agora. Tente novamente.</div>
+        <form id="bugForm" novalidate>
+          <div class="row">
+            <div class="field"><label for="name">Seu nome (opcional)</label><input id="name" type="text"
+                placeholder="Ex.: Maria Silva" /></div>
+            <div class="field"><label for="email">Seu e-mail (opcional)</label><input id="email" type="email"
+                placeholder="Ex.: maria@empresa.com" /></div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="severity">Gravidade</label>
+              <select id="severity">
+                <option>Baixa</option>
+                <option>Média</option>
+                <option>Alta</option>
+              </select>
+            </div>
+            <div class="field"><label for="title">Título</label><input id="title" type="text" required /></div>
+          </div>
+          <div class="field"><label for="desc">Descrição</label><textarea id="desc" required></textarea></div>
+          <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
+            <button type="submit" id="sendBtn" class="btn">Enviar</button>
+            <button type="reset" class="btn secondary">Limpar</button>
+          </div>
+        </form>
+      </div>
+    </section>
+    <!-- MEMBROS -->
+    <section id="view-members" class="hidden">
+      <div class="card" style="max-width:900px;margin:0 auto">
+        <h2 style="margin:0 0 10px">Membros</h2>
+        <p class="muted" style="margin:0 0 12px">Gerencie os papéis (viewer, editor, admin). Somente
+          <strong>admin</strong> pode alterar.
+        </p>
+
+        <div id="memb-msg" class="msg"></div>
+
+        <div class="row" style="margin-bottom:10px">
+          <div class="field">
+            <label>Nome</label>
+            <input id="mb-name" type="text" placeholder="Nome" />
+          </div>
+          <div class="field">
+            <label>E-mail</label>
+            <input id="mb-email" type="email" placeholder="email@exemplo.com" />
+          </div>
+        </div>
+        <div class="row" style="margin-bottom:10px">
+          <div class="field">
+            <label>Papel</label>
+            <select id="mb-role">
+              <option value="viewer">viewer</option>
+              <option value="editor" selected>editor</option>
+              <option value="admin">admin</option>
+            </select>
+          </div>
+          <div class="field" style="display:flex;align-items:flex-end">
+            <button id="mb-add" class="btn secondary" type="button">Adicionar/Atualizar</button>
+          </div>
+        </div>
+
+        <div class="kpis" style="grid-template-columns:1fr">
+          <div class="kpi-card">
+            <div class="kpi-title">Equipe</div>
+            <div id="mb-list" style="margin-top:8px"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>ACIA Nexus — 2025</footer>
+
+  <!-- MODAL: Novo comunicado do Mural (apenas admin) -->
+  <div id="muralModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="mu-title-h">
+    <div class="modal-head">
+      <strong id="mu-title-h">Novo comunicado</strong>
+      <button id="mu-close" class="btn secondary" type="button">Fechar</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="row">
+        <div class="field">
+          <label for="mu-title">Título</label>
+          <input id="mu-title" type="text" placeholder="Ex.: Campanha de fim de ano" />
+        </div>
+        <div class="field">
+          <label for="mu-cat">Categoria</label>
+          <select id="mu-cat">
+            <option>Comercial</option>
+            <option>Eventos</option>
+            <option>RH</option>
+            <option>Operações</option>
+            <option>Geral</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="mu-text">Mensagem</label>
+        <textarea id="mu-text" placeholder="Conteúdo objetivo do comunicado."></textarea>
+      </div>
+      <div id="mu-msg" class="msg"></div>
+    </div>
+
+    <div class="modal-foot">
+      <button id="mu-publish" class="btn" type="button">Publicar</button>
+    </div>
+  </div>
+
+
+  <!-- MODAL EDITAR CARD -->
+  <div id="modalBack" class="backdrop"></div>
+  <!-- MODAL EDITAR CARD (atualizado) -->
+  <div id="cardModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+    <div class="modal-head">
+      <strong id="m-title">Editar card</strong>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="m-badge-gut" class="badge">GUT: 0 (C)</span>
+        <span id="m-badge-pri" class="badge">PRI: 0</span>
+        <button id="m-open-chat" class="btn secondary" type="button" title="Abrir chat">Chat</button>
+        <button id="m-close" class="btn secondary" type="button">Fechar</button>
+      </div>
+    </div>
+
+    <div class="modal-body">
+      <div class="cols">
+        <div class="field">
+          <label for="m-title-in">Título</label>
+          <input id="m-title-in" type="text" />
+        </div>
+        <div class="field">
+          <label for="m-resp">Responsável</label>
+          <!-- value = uid; data-label = nome/email p/ exibir em card.resp -->
+          <select id="m-resp"></select>
+        </div>
+      </div>
+
+      <div class="cols">
+        <div class="field">
+          <label for="m-status">Status</label>
+          <select id="m-status"></select>
+        </div>
+        <div class="field">
+          <label for="m-due">Prazo</label>
+          <input id="m-due" type="datetime-local" />
+        </div>
+      </div>
+
+      <!-- GUT/Prioridade -->
+      <div class="card" style="margin:6px 0">
+        <h4 style="margin:0 0 6px">GUT & Prioridade</h4>
+        <div class="row">
+          <div class="field"><label for="m-g">Gravidade (G)</label><input id="m-g" type="number" min="1" max="10" />
+          </div>
+          <div class="field"><label for="m-u">Urgência (U)</label><input id="m-u" type="number" min="1" max="10" />
+          </div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="m-t">Tendência (T)</label><input id="m-t" type="number" min="1" max="10" />
+          </div>
+          <div class="field"><label for="m-gut">Resultado (G×U×T)</label><input id="m-gut" type="text" disabled /></div>
+        </div>
+      </div>
+
+      <!-- Membros -->
+      <div class="field">
+        <label for="m-members">Membros (multi)</label>
+        <select id="m-members" multiple size="6"></select>
+      </div>
+
+      <!-- Rotina -->
+      <div id="m-rt-block" class="card" style="margin:6px 0">
+        <h4 style="margin:0 0 6px">Rotina</h4>
+        <div class="row">
+          <div class="field">
+            <label for="m-rt-enabled">Ativar rotina</label>
+            <select id="m-rt-enabled">
+              <option value="off">Desativada</option>
+              <option value="on">Ativada</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="m-rt-kind">Periodicidade</label>
+            <select id="m-rt-kind">
+              <option value="DAILY">Diariamente</option>
+              <option value="WEEKLY">Semanalmente</option>
+              <option value="BIWEEKLY">Quinzenalmente</option>
+              <option value="MONTHLY">Mensalmente</option>
+              <option value="MON">Toda segunda</option>
+              <option value="TUE">Toda terça</option>
+              <option value="WED">Toda quarta</option>
+              <option value="THU">Toda quinta</option>
+              <option value="FRI">Toda sexta</option>
+            </select>
+          </div>
+        </div>
+        <p class="muted" style="margin:6px 0 0;font-size:12px">
+          Com rotina ativada, ao “bater” o prazo o card volta ao início do fluxo e o próximo prazo é calculado
+          automaticamente.
+        </p>
+      </div>
+
+      <div class="field"><label for="m-desc">Descrição</label><textarea id="m-desc" rows="6"></textarea></div>
+
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <h4 style="margin:0 0 6px">Checklist</h4>
+          <div id="m-checklist"></div>
+          <div class="field" style="margin-top:6px;display:flex;gap:8px">
+            <input id="m-new-check" type="text" placeholder="Novo item…" />
+            <button id="m-add-check" class="btn secondary" type="button">Adicionar</button>
+          </div>
+        </div>
+        <div>
+          <h4 style="margin:0 0 6px">Anexos (URL)</h4>
+          <div id="m-attachments"></div>
+          <div class="field" style="margin-top:6px;display:flex;gap:8px">
+            <input id="m-new-attach" type="url" placeholder="https://link-do-arquivo" />
+            <button id="m-send-attach" class="btn secondary" type="button">Adicionar</button>
+          </div>
+          <p class="muted" style="font-size:12px;margin:6px 0 0">Firebase Storage não incluído (por enquanto 😉)</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-foot">
+      <button id="m-delete" class="btn secondary" type="button">Excluir</button>
+      <button id="m-save" class="btn" type="button">Salvar</button>
+    </div>
+  </div>
+
+
+  <!-- MODAL DE CHAT (por card) -->
+  <div id="chatModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="chat-title">
+    <div class="modal-head">
+      <strong id="chat-title">Chat</strong>
+      <button id="chat-close" class="btn secondary" type="button">Fechar</button>
+    </div>
+    <div class="modal-body">
+      <div id="chat-list" style="display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow:auto"></div>
+    </div>
+    <div class="modal-foot">
+      <input id="chat-text" type="text" placeholder="Escreva uma mensagem…" />
+      <button id="chat-send" class="btn" type="button">Enviar</button>
+    </div>
+  </div>
+
+
+  <script type="module">
+    /* ===========================
+       CONFIG & HELPERS
+    ============================ */
+
+    function computeGut(g, u, t) {
+      const G = Math.max(1, Math.min(10, Number(g) || 0));
+      const U = Math.max(1, Math.min(10, Number(u) || 0));
+      const T = Math.max(1, Math.min(10, Number(t) || 0));
+      return G * U * T;
+    }
+    function gutClass(gut) {
+      if (gut > 100) return 'A';
+      if (gut >= 50) return 'B';
+      return 'C';
+    }
+    /* prioridade = GUT + bônus de urgência do prazo */
+    function computePriority(dueISO, gut) {
+      let bonus = 0;
+      if (dueISO) {
+        const hrs = (new Date(dueISO).getTime() - Date.now()) / 36e5;
+        if (hrs <= 0) bonus = 200;            // atrasado
+        else if (hrs <= 1) bonus = 160;
+        else if (hrs <= 3) bonus = 120;
+        else if (hrs <= 24) bonus = 60;
+      }
+      return (gut || 0) + bonus;
+    }
+
+
+    // === CHAT (por card) ===
+    const Chat = {
+      async addMessage(cardId, text) {
+        const createdAt = new Date().toISOString();
+        const author = currentUser?.uid || 'anon';
+        const authorName = currentUser?.displayName || currentUser?.email || '—';
+        if (cloudOk) {
+          const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+          await addDoc(collection(db, 'cards', cardId, 'chat'), { text, createdAt, author, authorName });
+        } else {
+          const all = LocalDB.load();
+          const i = all.cards.findIndex(c => String(c.id) === String(cardId));
+          if (i >= 0) {
+            all.cards[i].chat = (all.cards[i].chat || []).concat({ text, createdAt, author, authorName });
+            LocalDB.save(all);
+          }
+        }
+      },
+      listen(cardId, cb) {
+        if (cloudOk) {
+          const listen = async () => {
+            const { collection, onSnapshot, orderBy, query } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+            const qRef = query(collection(db, 'cards', cardId, 'chat'), orderBy('createdAt', 'asc'));
+            return onSnapshot(qRef, (snap) => {
+              const arr = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+              cb(arr);
+            });
+          };
+          return listen();
+        } else {
+          const emit = () => cb((LocalDB.list().find(c => String(c.id) === String(cardId))?.chat) || []);
+          emit();
+          const t = setInterval(emit, 700);
+          return () => clearInterval(t);
+        }
+      },
+      async count(cardId) {
+        if (cloudOk) {
+          const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+          const snap = await getDocs(collection(db, 'cards', cardId, 'chat'));
+          return snap.size || 0;
+        } else {
+          const l = (LocalDB.list().find(c => String(c.id) === String(cardId))?.chat) || [];
+          return l.length;
+        }
+      }
+    };
+
+
+    const Members = {
+      async add({ uid, displayName, email, role = 'editor' }) {
+        const createdAt = new Date().toISOString();
+        if (cloudOk) {
+          const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+          // use o uid do auth quando houver; senão gera um id
+          const id = uid || (crypto?.randomUUID?.() || String(Date.now() + Math.random()));
+          await setDoc(doc(db, 'members', id), { displayName, email, role, createdAt });
+          return { id, displayName, email, role, createdAt };
+        } else {
+          // fallback local
+          const all = LocalDB.load();
+          all.members = all.members || [];
+          const id = String(Date.now() + Math.random());
+          all.members.push({ id, displayName, email, role, createdAt });
+          LocalDB.save(all);
+          return { id, displayName, email, role, createdAt };
+        }
+      },
+      async list() {
+        if (cloudOk) {
+          const { getDocs, collection, orderBy, query } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+          const snap = await getDocs(query(collection(db, 'members'), orderBy('createdAt', 'asc')));
+          const arr = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+          return arr;
+        } else {
+          return (LocalDB.load().members || []);
+        }
+      }
+    };
+
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+    const setMsg = (el, type, text) => { if (!el) return; el.className = `msg ${type} show`; el.textContent = text; setTimeout(() => el.classList.remove('show'), 5000); };
+    let currentDisplayName = null;
+
+    const ALL_RESP = ["João Vitor Sgobin", "ssgobin"];
+    const FLOWS = {
+      PLANEJAMENTO: ["PENDENTE", "EXECUÇÃO", "APROVAR", "CORRIGIR", "FINALIZAR", "CONCLUÍDO"],
+      ROTINA: ["PENDENTE", "EXECUÇÃO", "APROVAR", "CORRIGIR", "FINALIZAR", "CONCLUÍDO"],
+      EVENTOS: ["PENDENTE", "PLANEJAMENTO", "CRIAÇÃO", "DIVULGAÇÃO", "ORGANIZAÇÃO", "EXECUÇÃO", "PÓS-EVENTO", "CONCLUÍDO"],
+      COMERCIAL: ["PENDENTE", "PROSPECÇÃO", "PROPOSTA", "NEGOCIAÇÃO", "FECHADO", "CONCLUÍDO"]
+    };
+
+
+    const DEFAULT_CARD_DESC = `TAREFA QUE DEVE SER FEITA
+Descrever todas as ações que devem ser aplicada para a execução e entrega da tarefa, com excelência.
+
+OBJETIVO DA TAREFA
+Descrever qual é a razão da execução desta tarefa e qual o resultado esperado.
+
+INFORMAÇÕES ADICIONAIS
+Listar todas as informações pertinentes que contribuam para a ação mais efetiva e assertiva em sua execução.`;
+
+
+    /* ========== IA (Groq) ========== */
+    // Cole sua chave do Groq. Se vazio, usa fallback heurístico local.
+    const GROQ_API_KEY = "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"; // <<< SUA GROQ KEY AQUI
+    // Modelo Groq (sugestões: "llama3-70b-8192", "mixtral-8x7b-32768")
+    const GROQ_MODEL = "llama-3.3-70b-versatile";
+    // Se encontrar CORS no navegador, publique um proxy simples e coloque a URL aqui:
+    const GROQ_PROXY_URL = ""; // ex.: "https://seu-worker.exemplo.workers.dev"
+
+    // Firebase (opcional). Sem as credenciais, roda em modo Local (localStorage).
+    const firebaseConfig = {
+      apiKey: "AIzaSyA7l0LovQnLdv9obeR3YSH6MTdR2d6xcug",
+      authDomain: "hubacia-407c1.firebaseapp.com",
+      projectId: "hubacia-407c1",
+      storageBucket: "hubacia-407c1.firebasestorage.app",
+      messagingSenderId: "633355141941",
+      appId: "1:633355141941:web:e65270fdabe95da64cc27c",
+      measurementId: "G-LN9BEKHCD5"
+    };
+
+    let cloudOk = false, app = null, db = null, auth = null, currentUser = null, currentRole = 'editor';
+
+    async function initFirebase() {
+      try {
+        if (!firebaseConfig.apiKey) throw new Error('Sem config');
+
+        const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+        const { getFirestore, doc, setDoc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+        const {
+          getAuth, onAuthStateChanged, signOut,
+          signInWithEmailAndPassword, createUserWithEmailAndPassword,
+          sendEmailVerification, sendPasswordResetEmail, fetchSignInMethodsForEmail
+        } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+
+
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+        const ALLOWED_DOMAIN = 'acia.com.br';
+        // handlers globais
+
+
+        window.signInWork = async () => {
+          const auth = getAuth();
+          const email = (prompt('Seu e-mail @acia.com.br:') || '').trim().toLowerCase();
+          if (!email.endsWith('@' + ALLOWED_DOMAIN)) {
+            alert('Use um e-mail @' + ALLOWED_DOMAIN);
+            return;
+          }
+          const pass = prompt('Senha:') || '';
+
+          try {
+            await signInWithEmailAndPassword(auth, email, pass);
+            return; // sucesso
+          } catch (err) {
+            // Erro genérico (senha errada / usuário não existe / método desativado)
+            if (err.code === 'auth/invalid-credential') {
+              try {
+                const methods = await fetchSignInMethodsForEmail(auth, email); // []
+                if (!methods.length) {
+                  // usuário NÃO existe -> oferecer cadastro
+                  const ok = confirm('Conta não encontrada. Deseja criar com este e-mail?');
+                  if (!ok) return;
+
+                  try {
+                    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                    try {
+                      await sendEmailVerification(cred.user);
+                      alert('Enviamos um e-mail de verificação. Confirme e faça login novamente.');
+                    } catch { }
+                    await signOut(auth);
+                  } catch (e) {
+                    if (e.code === 'auth/weak-password') {
+                      alert('Senha fraca (mín. 6 caracteres). Tente novamente.');
+                    } else {
+                      alert('Falha ao criar conta: ' + (e.message || e.code));
+                    }
+                  }
+                } else if (methods.includes('password')) {
+                  // usuário existe com senha -> provavelmente SENHA ERRADA
+                  const r = confirm('Senha incorreta. Deseja receber um e-mail para redefinir?');
+                  if (r) {
+                    await sendPasswordResetEmail(auth, email);
+                    alert('Enviamos instruções para ' + email);
+                  }
+                } else {
+                  // existe, mas com outro provedor (ex.: microsoft.com, google.com…)
+                  alert('Este e-mail usa outro método de login: ' + methods.join(', ') +
+                    '. Use o provedor correspondente ou peça para vincular senha.');
+                }
+              } catch (probeErr) {
+                alert('Erro ao verificar métodos de login: ' + (probeErr.message || probeErr.code));
+              }
+              return;
+            }
+
+            if (err.code === 'auth/operation-not-allowed') {
+              alert('O método Email/Password está desativado no Firebase Console.');
+              return;
+            }
+
+            // Outros erros (ex.: rede)
+            alert('Falha no login: ' + (err.message || err.code));
+          }
+        };
+
+
+        // (opcional) atalho pra “esqueci a senha”
+        window.resetWorkPwd = async () => {
+          const email = (prompt('E-mail @' + ALLOWED_DOMAIN + ' para reset de senha:') || '').trim().toLowerCase();
+          if (!email.endsWith('@' + ALLOWED_DOMAIN)) { alert('Domínio inválido'); return; }
+          try {
+            await sendPasswordResetEmail(auth, email);
+            alert('Enviamos instruções de redefinição de senha para ' + email);
+          } catch (e) {
+            alert('Não foi possível enviar o reset: ' + (e.message || e.code));
+          }
+        };
+        window.signOutApp = async () => { await signOut(auth); };
+
+        // muda UI conforme estado
+        function paintAuthUI() {
+          const chip = $('#authChip');
+          const btnIn = $('#btnLogin');
+          const btnOut = $('#btnLogout');
+
+          if (currentUser) {
+            const name = currentDisplayName || currentUser.displayName || currentUser.email || currentUser.uid.slice(0, 6);
+            chip.textContent = `${name} • ${currentRole}`;
+            btnIn.classList.add('hidden');
+            btnOut.classList.remove('hidden');
+          } else {
+            chip.textContent = 'Offline';
+            btnIn.classList.remove('hidden');
+            btnOut.classList.add('hidden');
+          }
+        }
+
+
+        // Observa autenticação
+        onAuthStateChanged(auth, async (u) => {
+          currentUser = u || null;
+
+          if (!u) {
+            cloudOk = false;            // ou mantenha true só se quiser exigir login
+            currentRole = 'viewer';
+            currentDisplayName = null;
+            document.dispatchEvent(new Event('auth:changed'));
+            paintAuthUI();
+            return; // << não continue se não houver usuário
+          }
+
+          // ... (só aqui busque o doc do usuário)
+          const ud = await getDoc(doc(db, 'users', u.uid));
+          currentRole = ud.exists() ? (ud.data().role || 'editor') : 'editor';
+          currentDisplayName = (ud.exists() && ud.data().name) ? ud.data().name : (u.displayName || null);
+          cloudOk = true;
+
+          document.dispatchEvent(new Event('auth:changed'));
+          paintAuthUI();
+        });
+
+        // liga botões
+        $('#btnLogout')?.addEventListener('click', () => window.signOutApp());
+        $('#btnLogin')?.addEventListener('click', () => { location.hash = '#/entrar'; });
+
+
+      } catch (e) {
+        cloudOk = false;
+        $('#authChip').textContent = `Local • ${currentRole}`;
+        console.warn('Firebase init falhou:', e.message);
+      }
+    }
+
+
+    /* ===========================
+       LocalDB Fallback
+    ============================ */
+    const LocalDB = {
+      load() { try { return JSON.parse(localStorage.getItem('acia-kanban-v2') || '{"cards":[]}'); } catch { return { cards: [] } } },
+      save(data) { localStorage.setItem('acia-kanban-v2', JSON.stringify(data)); },
+      list() { return this.load().cards; },
+      upsert(card) {
+        const all = this.load();
+        const i = all.cards.findIndex(c => String(c.id) === String(card.id));
+        if (i >= 0) all.cards[i] = { ...all.cards[i], ...card }; else all.cards.push(card);
+        this.save(all);
+      },
+      remove(id) {
+        const all = this.load();
+        const i = all.cards.findIndex(c => String(c.id) === String(id));
+        if (i >= 0) {
+          all.cards.splice(i, 1);
+          this.save(all);
+        }
+      }
+
+    };
+
+    /* ===========================
+       Data Access Layer (Firestore/Local)
+    ============================ */
+    const Cards = {
+
+      async add(card) {
+        const base = {
+          title: card.title || '(sem título)',
+          desc: card.desc || '',
+          board: card.board || 'PLANEJAMENTO',
+          status: (card.status || FLOWS[card.board || 'PLANEJAMENTO'][0]),
+          resp: card.resp || ALL_RESP[0],
+          respUid: card.respUid || null,                 // NOVO
+          due: card.due || null,
+          createdAt: new Date().toISOString(),
+          routine: card.routine || { enabled: false },
+          members: Array.isArray(card.members) ? card.members : [],
+          gut: Number(card.gut) || 0,                      // NOVO
+          gutGrade: card.gutGrade || 'C',                // NOVO
+          priority: Number(card.priority) || 0             // NOVO
+        };
+        if (cloudOk) {
+          const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+          const ref = collection(db, 'cards');
+          const docRef = await addDoc(ref, base);
+          return { id: docRef.id, ...base };
+        } else {
+          const id = String(Date.now() + Math.random());
+          const rec = { id, ...base };
+          LocalDB.upsert(rec); return rec;
+        }
+      },
+      async update(id, patch) {
+        if (cloudOk) {
+          const { doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+          await updateDoc(doc(db, 'cards', id), patch);
+        } else {
+          const all = LocalDB.load();
+          const i = all.cards.findIndex(c => String(c.id) === String(id));
+          if (i >= 0) { all.cards[i] = { ...all.cards[i], ...patch }; LocalDB.save(all); }
+        }
+      },
+      listen(cb) {
+        if (cloudOk) {
+          import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js").then(({ collection, onSnapshot, orderBy, query }) => {
+            const qRef = query(collection(db, 'cards'), orderBy('createdAt', 'asc'));
+            const unsub = onSnapshot(qRef, (snap) => {
+              const arr = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() })); cb(arr);
+            });
+            Cards._unsub = unsub;
+          });
+          return () => Cards._unsub && Cards._unsub();
+        } else {
+          cb(LocalDB.list());
+          // pooling leve (700ms) para evitar “piscar”
+          const t = setInterval(() => cb(LocalDB.list()), 700);
+          return () => clearInterval(t);
+        }
+      },
+      seed() {
+        const sample = [
+          { title: 'Brief campanha X', board: 'PLANEJAMENTO', status: 'PENDENTE', resp: 'BRUNA', due: new Date(Date.now() + 864e5).toISOString() },
+          { title: 'Rotina: fechar caixa', board: 'ROTINA', status: 'EXECUÇÃO', resp: 'DANI' },
+          { title: 'Evento: checklist palco', board: 'EVENTOS', status: 'PLANEJAMENTO', resp: 'JOÃO VITOR' },
+          { title: 'Aprovar peças', board: 'PLANEJAMENTO', status: 'APROVAR', resp: 'VIVIAN' },
+          { title: 'Divulgação imprensa', board: 'EVENTOS', status: 'DIVULGAÇÃO', resp: 'TATI' }
+        ];
+        sample.forEach(c => LocalDB.upsert({ id: String(Date.now() + Math.random()), createdAt: new Date().toISOString(), desc: '', ...c }));
+        return sample.length;
+      },
+      async remove(id) {
+        if (cloudOk) {
+          const { doc, deleteDoc, collection, getDocs } =
+            await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+
+          // apaga subcoleções conhecidas
+          const subs = ['comments', 'attachments', 'checklist', 'chat'];
+          for (const sc of subs) {
+            const snap = await getDocs(collection(db, 'cards', id, sc));
+            await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+          }
+
+          // apaga o doc do card
+          await deleteDoc(doc(db, 'cards', id));
+        } else {
+          LocalDB.remove(id);
+        }
+      }
+
+    };
+
+    const Sub = {
+      async addComment(cardId, text) {
+        const createdAt = new Date().toISOString();
+        const author = currentUser?.uid || 'anon';
+        const authorName = currentUser?.displayName || currentUser?.email || '—';
+
+        if (cloudOk) {
+          const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+          await addDoc(collection(db, 'cards', cardId, 'comments'), { text, createdAt, author, authorName });
+        } else {
+          const all = LocalDB.load(); const i = all.cards.findIndex(c => String(c.id) === String(cardId));
+          if (i >= 0) {
+            all.cards[i].comments = (all.cards[i].comments || []).concat({ text, createdAt, author, authorName });
+            LocalDB.save(all);
+          }
+        }
+      },
+      listenComments(cardId, cb) {
+        if (cloudOk) {
+          const listen = async () => {
+            const { collection, onSnapshot, orderBy, query } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+            const qRef = query(collection(db, 'cards', cardId, 'comments'), orderBy('createdAt', 'asc'));
+            return onSnapshot(qRef, (snap) => { const arr = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() })); cb(arr); });
+          };
+          listen().then(u => Sub._unsubC = u); return () => Sub._unsubC && Sub._unsubC();
+        } else {
+          const emit = () => cb((LocalDB.list().find(c => String(c.id) === String(cardId))?.comments) || []);
+          emit(); const t = setInterval(emit, 700); return () => clearInterval(t);
+        }
+      },
+      async addAttachment(cardId, url) {
+        const createdAt = new Date().toISOString();
+        const author = currentUser?.uid || 'anon';
+        const authorName = currentUser?.displayName || currentUser?.email || '—';
+
+        if (cloudOk) {
+          const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+          await addDoc(collection(db, 'cards', cardId, 'attachments'), { url, createdAt, author, authorName });
+        } else {
+          const all = LocalDB.load(); const i = all.cards.findIndex(c => String(c.id) === String(cardId));
+          if (i >= 0) {
+            all.cards[i].attachments = (all.cards[i].attachments || []).concat({ url, createdAt, author, authorName });
+            LocalDB.save(all);
+          }
+        }
+      },
+      listenAttachments(cardId, cb) {
+        if (cloudOk) {
+          const listen = async () => {
+            const { collection, onSnapshot, orderBy, query } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+            const qRef = query(collection(db, 'cards', cardId, 'attachments'), orderBy('createdAt', 'asc'));
+            return onSnapshot(qRef, (snap) => { const arr = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() })); cb(arr); });
+          };
+          listen().then(u => Sub._unsubA = u); return () => Sub._unsubA && Sub._unsubA();
+        } else {
+          const emit = () => cb((LocalDB.list().find(c => String(c.id) === String(cardId))?.attachments) || []);
+          emit(); const t = setInterval(emit, 700); return () => clearInterval(t);
+        }
+      },
+      async addChecklistItem(cardId, text, done = false) {
+        const createdAt = new Date().toISOString();
+        if (cloudOk) {
+          const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+          await addDoc(collection(db, 'cards', cardId, 'checklist'), { text, done: !!done, createdAt });
+        } else {
+          const all = LocalDB.load(); const i = all.cards.findIndex(c => String(c.id) === String(cardId));
+          if (i >= 0) {
+            const l = (all.cards[i].checklist || []);
+            l.push({ id: String(Date.now() + Math.random()), text, done: !!done, createdAt });
+            all.cards[i].checklist = l; LocalDB.save(all);
+          }
+        }
+      },
+      async setChecklistDone(cardId, docId, done) {
+        if (cloudOk) {
+          const { doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+          await updateDoc(doc(db, 'cards', cardId, 'checklist', docId), { done: !!done });
+        } else {
+          const all = LocalDB.load();
+          const i = all.cards.findIndex(c => String(c.id) === String(cardId));
+          if (i >= 0) {
+            const l = (all.cards[i].checklist || []);
+            const it = l.find(x => x.id === docId) || l[docId]; // compat: id ou idx
+            if (it) { it.done = !!done; }
+            LocalDB.save(all);
+          }
+        }
+      },
+      async toggleChecklistItem(cardId, idx) {
+        if (cloudOk) {
+          const list = await fetchChecklist(cardId);
+          const newList = list.map((it, i) => i === idx ? { ...it, done: !it.done } : it);
+          await saveChecklist(cardId, newList);
+        } else {
+          const all = LocalDB.load(); const i = all.cards.findIndex(c => String(c.id) === String(cardId));
+          if (i >= 0) { const l = (all.cards[i].checklist || []); if (l[idx]) l[idx].done = !l[idx].done; LocalDB.save(all); }
+        }
+      },
+      listenChecklist(cardId, cb) {
+        if (cloudOk) {
+          const listen = async () => {
+            const { collection, onSnapshot, orderBy, query } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+            const qRef = query(collection(db, 'cards', cardId, 'checklist'), orderBy('createdAt', 'asc'));
+            const unsub = onSnapshot(qRef, (snap) => {
+              const arr = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+              cb(arr);
+            });
+            return unsub;
+          };
+          listen().then(u => Sub._unsubCL = u);
+          return () => Sub._unsubCL && Sub._unsubCL();
+        } else {
+          const emit = () => cb((LocalDB.list().find(c => String(c.id) === String(cardId))?.checklist) || []);
+          emit(); const t = setInterval(emit, 700); return () => clearInterval(t);
+        }
+      }
+
+    };
+
+    async function fetchChecklist(cardId) {
+      if (!cloudOk) {
+        return (LocalDB.list().find(c => String(c.id) === String(cardId))?.checklist) || [];
+      }
+      const { collection, getDocs, orderBy, query } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+      const qRef = query(collection(db, 'cards', cardId, 'checklist'), orderBy('createdAt', 'asc'));
+      const snap = await getDocs(qRef);
+      const arr = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+      return arr;
+    }
+
+
+    async function saveChecklist(cardId, list) {
+      if (!cloudOk) {
+        const all = LocalDB.load(); const i = all.cards.findIndex(c => String(c.id) === String(cardId));
+        if (i >= 0) { all.cards[i].checklist = list; LocalDB.save(all); }
+        return;
+      }
+      const { collection, getDocs, deleteDoc, doc, addDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+      const col = collection(db, 'cards', cardId, 'checklist');
+      const cur = await getDocs(col);
+      await Promise.all(cur.docs.map(d => deleteDoc(d.ref)));
+      for (const it of list) { await addDoc(col, it); }
+    }
+
+    /* ===========================
+       IA Checklist (Groq + fallback)
+    ============================ */
+    async function generateChecklistGroq({ title, desc, board }) {
+      const fallback = generateChecklistHeuristic({ title, desc, board });
+      if (!GROQ_API_KEY) return fallback;
+
+      try {
+        const prompt = `Gere uma checklist objetiva (5 a 10 itens) em português para a tarefa abaixo.
+Responda como lista de itens simples (sem numeração), cada item curto (verbo no infinitivo).
+
+Contexto:
+- Board: ${board}
+- Título: ${title}
+- Descrição: ${desc || '(sem descrição)'}
+`;
+        const body = JSON.stringify({
+          model: GROQ_MODEL,
+          messages: [
+            { role: "system", content: "Você é um assistente de PM que cria checklists claras e práticas." },
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.2
+        });
+
+        // Endpoint OpenAI-compatible do Groq
+        const url = "https://api.groq.com/openai/v1/chat/completions";
+        const doFetch = (endpoint) => fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_API_KEY}` },
+          body
+        });
+
+        const resp = await (GROQ_PROXY_URL ? doFetch(GROQ_PROXY_URL) : doFetch(url));
+        if (!resp.ok) throw new Error('Groq HTTP ' + resp.status);
+        const data = await resp.json();
+        const text = (data?.choices?.[0]?.message?.content || "").trim();
+        const items = text.split(/\n+/).map(s => s.replace(/^[-*\d\.\)\s]+/, '').trim()).filter(Boolean);
+        return items.length ? items : fallback;
+      } catch (e) {
+        console.warn('Groq falhou, usando fallback:', e.message);
+        return fallback;
+      }
+    }
+
+    function generateChecklistHeuristic({ title, desc, board }) {
+      const t = (title || '').toLowerCase() + ' ' + (desc || '').toLowerCase();
+      const items = [];
+      items.push('Definir objetivo e escopo');
+      items.push('Mapear responsáveis e prazos');
+      items.push('Listar entregáveis e critérios de aceite');
+
+      if (board === 'EVENTOS') {
+        items.push('Reservar local e confirmar data');
+        items.push('Orçar fornecedores e solicitar propostas');
+        items.push('Planejar comunicação/divulgação');
+        items.push('Criar checklist de montagem e operação');
+      } else if (board === 'ROTINA') {
+        items.push('Documentar passo a passo padrão (SOP)');
+        items.push('Agendar recorrência e lembretes');
+      } else { // PLANEJAMENTO
+        items.push('Quebrar tarefa em sub-atividades');
+        items.push('Validar com partes interessadas');
+      }
+      if (t.includes('arte') || t.includes('peça') || t.includes('social')) {
+        items.push('Checar branding (logo, tipografia, cores)');
+        items.push('Revisar gramática e consistência');
+      }
+      if (t.includes('fornecedor') || t.includes('compra') || t.includes('orc') || t.includes('orçamento')) {
+        items.push('Cotação com pelo menos 3 fornecedores');
+        items.push('Aprovação de orçamento');
+      }
+      return items.slice(0, 10);
+    }
+    /* ===========================
+      Checklist UI helpers
+    =========================== */
+    function renderChecklistUI(container, items = [], { readonly = false, onToggle = null } = {}) {
+      if (!container) return;
+      if (!items.length) {
+        container.innerHTML = '<div class="muted">Sem itens</div>';
+        return;
+      }
+      container.innerHTML = items.map((it, i) => `
+        <label style="display:flex;gap:8px;align-items:center;margin:6px 0">
+          <input type="checkbox" ${it.done ? 'checked' : ''} data-idx="${i}" ${readonly ? 'disabled' : ''}/>
+          <span ${it.done ? 'style="text-decoration:line-through;opacity:.8"' : ''}>${it.text}</span>
+        </label>
+      `).join('');
+      if (!readonly && typeof onToggle === 'function') {
+        container.querySelectorAll('input[type="checkbox"]').forEach(ch => {
+          ch.onchange = () => onToggle(+ch.getAttribute('data-idx'));
+        });
+      }
+    }
+
+    async function isChecklistComplete(cardId) {
+      const list = await fetchChecklist(cardId);
+      return list.length === 0 ? true : list.every(it => !!it.done);
+    }
+
+
+
+
+    /* ===========================
+       UI: Criar card
+    ============================ */
+    ; (function initCreate() {
+      const cTitle = $('#c-title');
+      const cBoard = $('#c-board');
+      const cResp = $('#c-resp');
+      const cDue = $('#c-due');
+      const cDesc = $('#c-desc');
+      const cChecklistWrap = $('#c-checklist');
+      const btnAI = $('#c-ai');
+      const btnCreate = $('#c-create');
+      const msg = $('#c-msg');
+      const cMembers = $('#c-members');  // << NOVO
+      const cG = $('#c-g'), cU = $('#c-u'), cT = $('#c-t'), cGUT = $('#c-gut');
+      function refreshGUT() {
+        const g = computeGut(cG.value, cU.value, cT.value);
+        cGUT.value = g;
+      }
+      [cG, cU, cT].forEach(el => el.addEventListener('input', refreshGUT));
+      refreshGUT();
+
+      function paintCreatePermissions() {
+        const canEdit = (currentRole !== 'viewer') && !!currentUser;
+        [cTitle, cBoard, cResp, cDue, cDesc, btnAI, btnCreate, cMembers].forEach(el => el.disabled = !canEdit);
+        msg.textContent = canEdit ? '' : 'Entre com sua conta para criar cards.';
+      }
+      paintCreatePermissions();
+      document.addEventListener('auth:changed', paintCreatePermissions);
+
+      // valor padrão da descrição ao abrir a tela de criação
+      if (!cDesc.value?.trim()) {
+        cDesc.value = DEFAULT_CARD_DESC;
+      }
+
+
+
+      let unsubUsersForCreate = null;
+
+      async function bindUsersToCreate() {
+        // limpa listener anterior se houver
+        try { unsubUsersForCreate && unsubUsersForCreate(); } catch { }
+        unsubUsersForCreate = null;
+
+        // OFFLINE/FALLBACK — tenta usar a lista local "members" ou cai para ALL_RESP
+        if (!cloudOk) {
+          try {
+            const arr = (await Members.list()).filter(m => (m.role || 'editor') !== 'viewer');
+            const respOpts = arr.length
+              ? arr.map(u => `<option value="${(u.displayName || u.email || '—')}">${(u.displayName || u.email || '—')}</option>`).join('')
+              : ALL_RESP.map(n => `<option value="${n}">${n}</option>`).join('');
+            cResp.innerHTML = respOpts;
+            cMembers.innerHTML = arr.map(u => `<option value="${u.id}">${u.displayName || u.email || u.id}</option>`).join('');
+            return;
+          } catch {
+            cResp.innerHTML = ALL_RESP.map(n => `<option value="${n}">${n}</option>`).join('');
+            cMembers.innerHTML = '';
+            return;
+          }
+        }
+
+        // ONLINE (Firestore)
+        // ONLINE (Firestore)
+        const { collection, onSnapshot, orderBy, query } =
+          await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+
+        const qRef = query(collection(db, 'users'), orderBy('name', 'asc'));
+        unsubUsersForCreate = onSnapshot(qRef, (snap) => {
+          const users = [];
+          snap.forEach(d => {
+            const u = { id: d.id, ...d.data() };
+            if (u.placeholder) return;
+            const uid = u.uid || d.id;
+            const label = u.name || u.email || uid;
+            users.push({ uid, label, role: u.role || 'editor' });
+          });
+
+          // value = uid; data-label = nome para exibir/salvar
+          cResp.innerHTML = users.map(u =>
+            `<option value="${u.uid}" data-label="${u.label}">${u.label}</option>`
+          ).join('');
+
+          // Membros (salvamos UIDs)
+          cMembers.innerHTML = users.map(u =>
+            `<option value="${u.uid}">${u.label}</option>`
+          ).join('');
+        });
+
+      }
+
+      // atualiza quando logar/deslogar e na carga inicial
+      document.addEventListener('auth:changed', bindUsersToCreate);
+      bindUsersToCreate();
+
+
+      const rtBlock = $('#rt-block');
+      function toggleRtBlock() {
+        rtBlock.classList.toggle('hidden', cBoard.value !== 'ROTINA');
+      }
+      toggleRtBlock();
+      cBoard.addEventListener('change', toggleRtBlock);
+
+
+      let createChecklistBuffer = [];
+
+      btnAI.addEventListener('click', async () => {
+        const title = (cTitle.value || '').trim();
+        const desc = (cDesc.value || '').trim();
+        const board = cBoard.value;
+        if (!title) { setMsg(msg, 'err', 'Informe o título antes de gerar a checklist.'); return; }
+
+        setMsg(msg, 'ok', 'Gerando checklist…');
+        const items = await generateChecklistGroq({ title, desc, board });
+
+        createChecklistBuffer = items.map(t => ({
+          text: t,
+          done: false,
+          createdAt: new Date().toISOString()
+        }));
+
+        // define once so we can reuse on toggle:
+        function updatePreview() {
+          renderChecklistUI(cChecklistWrap, createChecklistBuffer, {
+            readonly: false,
+            onToggle: (idx) => {
+              const it = createChecklistBuffer[idx];
+              if (it) { it.done = !it.done; updatePreview(); }
+            }
+          });
+        }
+        updatePreview();
+
+        setMsg(msg, 'ok', 'Checklist gerada.');
+      });
+
+
+      btnCreate.addEventListener('click', async () => {
+        const title = (cTitle.value || '').trim();
+        if (!title) { setMsg(msg, 'err', 'Informe o título.'); return; }
+
+        const dueIso = cDue.value ? new Date(cDue.value).toISOString() : null;
+
+        // rotina só vale quando o board for ROTINA
+        const isRotinaBoard = (cBoard.value === 'ROTINA');
+        const rtEnabledSel = $('#c-rt-enabled');
+        const rtKindSel = $('#c-rt-kind');
+
+        const isRotinaOn = isRotinaBoard && rtEnabledSel && (rtEnabledSel.value === 'on');
+
+        // se rotina estiver ligada, precisamos de um prazo de partida
+        if (isRotinaOn && !dueIso) {
+          setMsg(msg, 'err', 'Para rotina, defina um prazo inicial (data/hora).');
+          return;
+        }
+
+        const members = Array.from(cMembers?.selectedOptions || []).map(o => o.value);
+        const respUid = cloudOk ? cResp.value : null;
+        const respLabel = cloudOk
+          ? (cResp.selectedOptions[0]?.dataset?.label || '')
+          : cResp.value;
+
+        const routine = isRotinaOn
+          ? { enabled: true, kind: rtKindSel?.value }
+          : { enabled: false };
+
+        const gut = computeGut(cG.value, cU.value, cT.value);
+        const priority = computePriority(dueIso, gut);
+        const gutGrade = gutClass(gut);
+
+
+        const rec = await Cards.add({
+          title,
+          board: cBoard.value,
+          resp: respLabel,         // mantém compat com sua UI atual
+          respUid,                 // <- novo campo
+          gut, gutGrade, priority,
+          due: dueIso,
+          desc: cDesc.value,
+          routine,
+          members
+        });
+
+        if (createChecklistBuffer.length) {
+          for (const it of createChecklistBuffer) {
+            await Sub.addChecklistItem(rec.id, it.text, it.done);
+          }
+        }
+
+
+        setMsg(msg, 'ok', '✅ Card criado!');
+        cTitle.value = '';
+        cDesc.value = DEFAULT_CARD_DESC; // mantém o template para o próximo card
+        cDue.value = '';
+        createChecklistBuffer = [];
+        cChecklistWrap.innerHTML = '<div class="muted">Sem itens</div>';
+        createChecklistBuffer = [];
+        cChecklistWrap.innerHTML = '<div class="muted">Sem itens</div>';
+
+        // foca no board da aba clicada
+        selectBoardTab(rec.board);
+      });
+      $('#md-aplicar')?.addEventListener('click', () => {
+        const o = ($('#md-objetivo').value || '').trim();
+        const a = ($('#md-acoes').value || '').trim();
+        const i = ($('#md-info').value || '').trim();
+
+        const desc = `TAREFA QUE DEVE SER FEITA
+${a || 'Descrever todas as ações que devem ser aplicadas...'}
+
+OBJETIVO DA TAREFA
+${o || 'Descrever qual é a razão da execução desta tarefa e qual o resultado esperado.'}
+
+INFORMAÇÕES ADICIONAIS
+${i || 'Listar informações que contribuam para a execução.'}`;
+
+        $('#c-desc').value = desc;
+      });
+
+    })();
+
+    /* ===========================
+       Kanbans (3 abas), KPIs, Modal, Drag
+    ============================ */
+    ; (function initKanbans() {
+      const tabs = $('#kb-tabs');
+      const columnsEl = $('#columns');
+      const kpiWrap = $('#kpis');
+      const kResp = $('#k-resp');
+      const kQ = $('#k-q');
+      const kRefresh = $('#k-refresh');
+
+      // diretório global de usuários: uid -> label
+      let userDir = new Map();
+      let unsubUsersDir = null;
+
+      async function bindUsersToKanbanFilter() {
+        if (unsubUsersDir) { try { unsubUsersDir(); } catch { } }
+        userDir.clear();
+
+        if (!cloudOk) {
+          kResp.innerHTML = '<option value="ALL" selected>Todos</option>' +
+            ALL_RESP.map(n => `<option value="${n}">${n}</option>`).join('');
+          return;
+        }
+
+        const { collection, onSnapshot, orderBy, query } =
+          await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+
+        const qRef = query(collection(db, 'users'), orderBy('name', 'asc'));
+        unsubUsersDir = onSnapshot(qRef, (snap) => {
+          userDir.clear();
+          const opts = ['<option value="ALL" selected>Todos</option>'];
+          snap.forEach(d => {
+            const u = d.data();
+            if (u.placeholder) return;
+            const uid = u.uid || d.id;
+            const label = u.name || u.email || uid;
+            userDir.set(uid, label);
+            opts.push(`<option value="${uid}">${label}</option>`);
+          });
+          kResp.innerHTML = opts.join('');
+        });
+      }
+      document.addEventListener('auth:changed', bindUsersToKanbanFilter);
+      bindUsersToKanbanFilter();
+
+      // ===== Chat por card =====
+      const btnChatOpen = $('#m-open-chat');
+      const chatModal = $('#chatModal');
+      const chatClose = $('#chat-close');
+      const chatTitle = $('#chat-title');
+      const chatList = $('#chat-list');
+      const chatText = $('#chat-text');
+      const chatSend = $('#chat-send');
+
+      let chatCardId = null;
+      let unsubChat = null;
+
+      function renderChat(arr) {
+        chatList.innerHTML = (arr || []).map(m => `
+      <div class="comment">
+        <div>${m.text}</div>
+        <div class="meta">${new Date(m.createdAt || Date.now()).toLocaleString('pt-BR')} · ${m.authorName || m.author || '—'}</div>
+      </div>
+    `).join('') || '<div class="muted">Sem mensagens</div>';
+        chatList.scrollTop = chatList.scrollHeight;
+      }
+      function openChat(card) {
+        chatCardId = card.id;
+        chatTitle.textContent = `Chat — ${card.title}`;
+        if (unsubChat) { try { unsubChat(); } catch { } unsubChat = null; }
+        const u = Chat.listen(chatCardId, renderChat);
+        unsubChat = typeof u === 'function' ? u : u?.then?.(fn => (unsubChat = fn));
+        chatModal.classList.add('show');
+        $('#modalBack').classList.add('show');
+        chatText.value = '';
+        chatText.focus();
+      }
+      function closeChat() {
+        if (unsubChat) { try { unsubChat(); } catch { } unsubChat = null; }
+        chatCardId = null;
+        chatModal.classList.remove('show');
+        if (!$('#cardModal').classList.contains('show')) $('#modalBack').classList.remove('show');
+      }
+      chatClose.onclick = closeChat;
+      chatSend.onclick = async () => {
+        const t = (chatText.value || '').trim();
+        if (!chatCardId || !t) return;
+        await Chat.addMessage(chatCardId, t);
+        chatText.value = '';
+        chatText.focus();
+      };
+      chatText.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); chatSend.click(); }
+      });
+
+      // ===== Modal Editar (refs) =====
+      const modal = $('#cardModal'), back = $('#modalBack');
+      const mTitle = $('#m-title-in'), mResp = $('#m-resp'), mStatus = $('#m-status'), mDue = $('#m-due'), mDesc = $('#m-desc');
+      const mMembers = $('#m-members');
+      const mG = $('#m-g'), mU = $('#m-u'), mT = $('#m-t'), mGUT = $('#m-gut');
+      const mBadgeGut = $('#m-badge-gut'), mBadgePri = $('#m-badge-pri');
+      const mRtEnabled = $('#m-rt-enabled'), mRtKind = $('#m-rt-kind');
+
+      const mAttach = $('#m-attachments'), mANew = $('#m-new-attach'), mASend = $('#m-send-attach');
+      const mChecklist = $('#m-checklist'), mChkNew = $('#m-new-check'), mChkAdd = $('#m-add-check');
+      const btnClose = $('#m-close'), btnSave = $('#m-save'), btnDelete = $('#m-delete');
+
+      // popula responsável+membros no modal
+      async function bindUsersToEdit() {
+        if (!cloudOk) {
+          mResp.innerHTML = ALL_RESP.map(n => `<option value="${n}" data-label="${n}">${n}</option>`).join('');
+          mMembers.innerHTML = '';
+          return;
+        }
+        const { collection, onSnapshot, orderBy, query } =
+          await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+        const qRef = query(collection(db, 'users'), orderBy('name', 'asc'));
+        onSnapshot(qRef, (snap) => {
+          const users = [];
+          snap.forEach(d => {
+            const u = d.data();
+            if (u.placeholder) return;
+            const uid = u.uid || d.id;
+            const label = u.name || u.email || uid;
+            users.push({ uid, label });
+          });
+          mResp.innerHTML = users.map(u => `<option value="${u.uid}" data-label="${u.label}">${u.label}</option>`).join('');
+          mMembers.innerHTML = users.map(u => `<option value="${u.uid}">${u.label}</option>`).join('');
+        });
+      }
+      bindUsersToEdit();
+
+      // ===== Estado/Kanban =====
+      let currentBoard = 'PLANEJAMENTO';
+      let cache = new Map();
+      let unsubCards = null, unsubA = null, unsubCL = null;
+      let lastAll = [];
+
+      document.addEventListener('auth:changed', () => {
+        try { unsubCards && unsubCards(); } catch { }
+        unsubCards = null;
+        cache?.clear?.();
+        startLive();
+      });
+
+      // ——— ROTINA: volta sempre para PENDENTE e calcula próximo prazo ———
+      const routineSeen = new Set();
+      async function routineTick() {
+        const all = lastAll || [];
+        const now = Date.now();
+
+        for (const c of all) {
+          const r = c.routine;
+          if (!r || !r.enabled || !c.due) continue;
+
+          const key = `${c.id}|${c.due}`;
+          if (routineSeen.has(key)) continue;
+
+          const dueTs = Date.parse(c.due);
+          if (!Number.isFinite(dueTs)) continue;
+
+          if (now >= dueTs) {
+            const flow = boardFlow(c.board);
+            const startStatus = flow.includes('PENDENTE') ? 'PENDENTE' : flow[0];
+            const next = computeNextDue(c.due, r.kind);
+            const patch = { status: startStatus };
+            if (next) patch.due = next;
+            await Cards.update(c.id, patch);
+            routineSeen.add(key);
+          }
+        }
+
+        if (routineSeen.size > 500) {
+          const keep = new Set(all.filter(c => c.due).map(c => `${c.id}|${c.due}`));
+          for (const k of Array.from(routineSeen)) if (!keep.has(k)) routineSeen.delete(k);
+        }
+      }
+      setInterval(routineTick, 60_000);
+
+      function addDays(d, n) { const dt = new Date(d); dt.setDate(dt.getDate() + n); return dt; }
+      function addMonths(d, n) { const dt = new Date(d); dt.setMonth(dt.getMonth() + n); return dt; }
+      function nextWeekday(from, targetWeekday) {
+        const dt = new Date(from);
+        const cur = dt.getDay();
+        let add = (targetWeekday - cur + 7) % 7;
+        if (add === 0) add = 7;
+        dt.setDate(dt.getDate() + add);
+        return dt;
+      }
+      function computeNextDue(prevDueISO, kind) {
+        const base = prevDueISO ? new Date(prevDueISO) : new Date();
+        switch (kind) {
+          case 'DAILY': return addDays(base, 1).toISOString();
+          case 'WEEKLY': return addDays(base, 7).toISOString();
+          case 'BIWEEKLY': return addDays(base, 14).toISOString();
+          case 'MONTHLY': return addMonths(base, 1).toISOString();
+          case 'MON': return nextWeekday(base, 1).toISOString();
+          case 'TUE': return nextWeekday(base, 2).toISOString();
+          case 'WED': return nextWeekday(base, 3).toISOString();
+          case 'THU': return nextWeekday(base, 4).toISOString();
+          case 'FRI': return nextWeekday(base, 5).toISOString();
+          default: return null;
+        }
+      }
+
+      function boardFlow(b) { return FLOWS[b] || FLOWS.PLANEJAMENTO; }
+
+      async function isChecklistComplete(cardId) {
+        const list = await fetchChecklist(cardId);
+        return list.length === 0 ? true : list.every(it => !!it.done);
+      }
+
+      function buildCols(flow) {
+        columnsEl.innerHTML = flow.map(s => `
+      <div class="col" data-col="${s}">
+        <h4><span class="pill">${s}</span></h4>
+        <div class="col-body" data-drop="1"></div>
+      </div>`).join('');
+
+        $$('#columns [data-drop="1"]').forEach(zone => {
+          zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
+          zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+          zone.addEventListener('drop', async (e) => {
+            e.preventDefault(); zone.classList.remove('drag-over');
+            const cardId = e.dataTransfer.getData('text/plain');
+            const newStatus = zone.closest('.col')?.getAttribute('data-col');
+            if (cardId && newStatus) {
+              const all = lastAll || [];
+              const card = all.find(c => String(c.id) === String(cardId));
+              if (!card) return;
+              const flow = boardFlow(card.board);
+              const oldIdx = flow.indexOf(card.status);
+              const newIdx = flow.indexOf(newStatus);
+              if (newIdx > oldIdx) {
+                const complete = await isChecklistComplete(cardId);
+                if (!complete) {
+                  alert('Finalize a checklist antes de avançar o status.');
+                  return;
+                }
+              }
+              await Cards.update(cardId, { status: newStatus });
+            }
+          });
+        });
+      }
+
+      function renderKPIs(list) {
+        const total = list.length;
+        const overdue = list.filter(c => c.due && new Date(c.due) < new Date()).length;
+        const exec = list.filter(c => c.status === 'EXECUÇÃO').length;
+        const pend = list.filter(c => ['PENDENTE', 'BACKLOG'].includes(c.status)).length;
+        const concl = list.filter(c => c.status === 'CONCLUÍDO').length;
+        const card = (t, v) => `<div class="kpi-card"><div class="kpi-title">${t}</div><div class="kpi-val">${v}</div></div>`;
+        kpiWrap.innerHTML = card('Total', total) + card('Vencidos', overdue) + card('Em execução', exec) + card('Pendentes', pend) + card('Concluídos', concl);
+      }
+
+      function ensureCardEl(card) {
+        let el = cache.get(String(card.id));
+        if (!el) {
+          el = document.createElement('div');
+          el.className = 'card-item';
+          el.draggable = true;
+          el.dataset.id = card.id;
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(6px)';
+          requestAnimationFrame(() => {
+            el.style.transition = 'opacity .2s, transform .2s';
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+          });
+          el.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', String(card.id)));
+          cache.set(String(card.id), el);
+        }
+
+        // --- calc de prazos (declare antes de usar) ---
+        const nowMs = Date.now();
+        const dueMs = card.due ? new Date(card.due).getTime() : NaN;
+        const dStr = card.due ? new Date(card.due).toLocaleString('pt-BR') : '—';
+        const isOver = Number.isFinite(dueMs) && (dueMs < nowMs);
+        const diffH = Number.isFinite(dueMs) ? (dueMs - nowMs) / 36e5 : Infinity;
+        const isWarn = !isOver && diffH <= 3;
+
+        const gutGrade = card.gutGrade || 'C';
+        const gutCls = gutGrade === 'A' ? 'gut-a' : gutGrade === 'B' ? 'gut-b' : 'gut-c';
+        const titleTxt = card.title || '(sem título)';
+
+        el.classList.remove('border-ok', 'border-warn', 'border-danger');
+        if (isOver) el.classList.add('border-danger');
+        else if (isWarn) el.classList.add('border-warn');
+        else el.classList.add('border-ok');
+
+        // nomes dos membros (online)
+        const membersHtml = (cloudOk && Array.isArray(card.members) && card.members.length)
+          ? `<div class="meta">${card.members.map(uid => `<span class="pill">👤 ${userDir.get(uid) || uid}</span>`).join(' ')}</div>`
+          : '';
+
+        el.innerHTML = `
+      <div class="title ${gutCls}" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <span class="title-text" style="font-weight:800;line-height:1.2;max-width:65%;word-break:break-word">${titleTxt}</span>
+        <div class="title-badges" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+          <span class="badge">GUT: ${card.gut ?? 0} (${gutGrade})</span>
+          <span class="badge">PRI: ${card.priority ?? 0}</span>
+        </div>
+      </div>
+      <div class="meta">
+        <span class="pill">${card.board}</span>
+        <span class="pill">${card.resp || '—'}</span>
+        <span class="due ${isOver ? 'over' : ''}">⏰ ${dStr}</span>
+        <span class="pill" data-chat-count="${card.id}">💬 …</span>
+      </div>
+      ${membersHtml}
+    `;
+
+        // chat badge + click
+        Chat.count(card.id).then(n => {
+          const badge = el.querySelector(`[data-chat-count="${card.id}"]`);
+          if (badge) badge.textContent = `💬 ${n}`;
+        });
+        el.querySelector(`[data-chat-count="${card.id}"]`)?.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          openChat(card);
+        });
+
+        el.onclick = () => openModal(card);
+        return el;
+      }
+
+      function mount(el, status) {
+        const col = columnsEl.querySelector(`.col[data-col="${status}"] .col-body`);
+        if (col && el.parentElement !== col) col.appendChild(el);
+      }
+
+      function applyFilters(all) {
+        const q = (kQ.value || '').toLowerCase();
+        const sel = kResp.value;
+        const isAll = !sel || sel === 'ALL';
+        return all
+          .filter(c => c.board === currentBoard)
+          .filter(c => {
+            if (isAll) return true;
+            if (cloudOk) {
+              const byResp = (c.respUid && c.respUid === sel);
+              const isMember = Array.isArray(c.members) && c.members.includes(sel);
+              return byResp || isMember;
+            } else {
+              return (c.resp || '').toLowerCase() === sel.toLowerCase();
+            }
+          })
+          .filter(c => !q || String(c.title || '').toLowerCase().includes(q))
+          // ordena por prioridade DESC, depois prazo ASC
+          .sort((a, b) => {
+            const pa = Number(a.priority) || 0;
+            const pb = Number(b.priority) || 0;
+            if (pb !== pa) return pb - pa;
+            const da = a.due ? new Date(a.due).getTime() : Infinity;
+            const db = b.due ? new Date(b.due).getTime() : Infinity;
+            return da - db;
+          });
+      }
+
+      function paint(all) {
+        lastAll = all;
+        const flow = boardFlow(currentBoard);
+        buildCols(flow);
+        const rows = applyFilters(all);
+        renderKPIs(rows);
+        const seen = new Set();
+        rows.forEach(c => { const el = ensureCardEl(c); mount(el, c.status); seen.add(String(c.id)); });
+        for (const [id, el] of cache.entries()) {
+          if (!seen.has(id)) { if (el.parentElement) el.parentElement.removeChild(el); cache.delete(id); }
+        }
+      }
+
+      function startLive() {
+        if (unsubCards) unsubCards();
+        unsubCards = Cards.listen(paint);
+      }
+
+      // Abas
+      tabs.addEventListener('click', (e) => {
+        const t = e.target.closest('.tab'); if (!t) return;
+        $$('.tab', tabs).forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        currentBoard = t.getAttribute('data-b');
+        startLive();
+      });
+      kRefresh.addEventListener('click', startLive);
+      kResp.addEventListener('change', startLive);
+      kQ.addEventListener('input', startLive);
+
+      // ===== Modal logic =====
+      let modalId = null;
+
+      function refreshEditGUT() {
+        const g = computeGut(mG.value, mU.value, mT.value);
+        mGUT.value = g;
+        const gutGrade = gutClass(g);
+        const dueIso = mDue.value ? new Date(mDue.value).toISOString() : null;
+        const pri = computePriority(dueIso, g);
+        if (mBadgeGut) mBadgeGut.textContent = `GUT: ${g} (${gutGrade})`;
+        if (mBadgePri) mBadgePri.textContent = `PRI: ${pri}`;
+      }
+      [mG, mU, mT, mDue].forEach(el => el?.addEventListener('input', refreshEditGUT));
+
+      function openModal(card) {
+        modalId = card.id;
+        $('#m-title').textContent = `Editar: ${card.title}`;
+        mTitle.value = card.title || '';
+        mDesc.value = card.desc || '';
+
+        if (card.due) {
+          const d = new Date(card.due);
+          const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+          mDue.value = iso;
+        } else mDue.value = '';
+
+        mStatus.innerHTML = boardFlow(card.board).map(s => `<option ${s === card.status ? 'selected' : ''}>${s}</option>`).join('');
+
+        if (cloudOk && card.respUid) mResp.value = card.respUid; else mResp.value = '';
+
+        if (Array.isArray(card.members)) {
+          Array.from(mMembers.options).forEach(o => { o.selected = card.members.includes(o.value); });
+        }
+
+        const r = card.routine || { enabled: false };
+        if (mRtEnabled) mRtEnabled.value = r.enabled ? 'on' : 'off';
+        if (mRtKind) mRtKind.value = r.kind || 'DAILY';
+
+        // GUT/PRI (se não guarda G/U/T individualmente, inicia em 5/5/5)
+        mG.value = 5; mU.value = 5; mT.value = 5;
+        mGUT.value = Number(card.gut) || 125;
+        refreshEditGUT();
+
+        const canEdit = (currentRole !== 'viewer') && !!currentUser;
+        [mTitle, mResp, mStatus, mDue, mDesc, mASend, btnSave, mChkAdd,
+          mG, mU, mT, mMembers, mRtEnabled, mRtKind, btnChatOpen].forEach(el => el && (el.disabled = !canEdit));
+        btnDelete.disabled = (currentRole !== 'admin');
+        btnDelete.classList.toggle('hidden', currentRole !== 'admin');
+
+        // anexos
+        if (unsubA) unsubA(); if (unsubCL) unsubCL();
+        unsubA = Sub.listenAttachments(card.id, (arr) => {
+          mAttach.innerHTML = (arr || []).map(a => `
+        <div class="comment">
+          <a href="${a.url}" target="_blank">${a.url}</a>
+          <div class="meta">${new Date(a.createdAt || Date.now()).toLocaleString('pt-BR')} · ${a.authorName || a.author || '—'}</div>
+        </div>
+      `).join('') || '<div class="muted">Sem anexos</div>';
+        });
+
+        unsubCL = Sub.listenChecklist(card.id, (arr) => {
+          mChecklist.innerHTML = (arr || []).map((it, i) => `
+        <label style="display:flex;gap:8px;align-items:center;margin:6px 0">
+          <input type="checkbox" data-id="${it.id || i}" ${it.done ? 'checked' : ''}/>
+          <span ${it.done ? 'style="text-decoration:line-through;opacity:.8"' : ''}>${it.text}</span>
+        </label>
+      `).join('') || '<div class="muted">Sem itens</div>';
+
+          mChecklist.querySelectorAll('input[type="checkbox"]').forEach((ch, idx) => {
+            ch.onchange = () => {
+              const id = ch.getAttribute('data-id');
+              if (cloudOk && id) Sub.setChecklistDone(modalId, id, ch.checked);
+              else Sub.toggleChecklistItem(modalId, idx);
+            };
+          });
+        });
+
+        btnChatOpen.onclick = () => openChat(card);
+
+        back.classList.add('show');
+        modal.classList.add('show');
+      }
+
+      function closeModal() {
+        modalId = null;
+        if (unsubA) unsubA(); if (unsubCL) unsubCL();
+        modal.classList.remove('show');
+        if (!$('#chatModal').classList.contains('show')) back.classList.remove('show');
+      }
+      btnClose.onclick = closeModal;
+      back.onclick = closeModal;
+
+      mASend.onclick = async () => {
+        if (!modalId) return;
+        const u = (mANew.value || '').trim(); if (!u) return;
+        await Sub.addAttachment(modalId, u); mANew.value = '';
+      };
+      mChkAdd.onclick = async () => {
+        if (!modalId) return;
+        const t = (mChkNew.value || '').trim(); if (!t) return;
+        await Sub.addChecklistItem(modalId, t); mChkNew.value = '';
+      };
+
+      btnSave.onclick = async () => {
+        if (!modalId) return;
+        const dueIso = mDue.value ? new Date(mDue.value).toISOString() : null;
+
+        const all = lastAll || [];
+        const card = all.find(c => String(c.id) === String(modalId));
+        const nextStatus = mStatus.value;
+        if (card) {
+          const flow = boardFlow(card.board);
+          const oldIdx = flow.indexOf(card.status);
+          const newIdx = flow.indexOf(nextStatus);
+          if (newIdx > oldIdx) {
+            const complete = await isChecklistComplete(modalId);
+            if (!complete) { alert('Finalize a checklist antes de avançar o status.'); return; }
+          }
+        }
+
+        let respUid = null, respLabel = '';
+        if (cloudOk) {
+          respUid = mResp.value || null;
+          respLabel = mResp.selectedOptions[0]?.dataset?.label || '';
+        } else {
+          respLabel = mResp.value || '';
+        }
+
+        const members = Array.from(mMembers.selectedOptions || []).map(o => o.value);
+        const routine = (mRtEnabled?.value === 'on')
+          ? { enabled: true, kind: mRtKind?.value || 'DAILY' }
+          : { enabled: false };
+
+        const gut = computeGut(mG.value, mU.value, mT.value);
+        const gutGrade = gutClass(gut);
+        const priority = computePriority(dueIso, gut);
+
+        await Cards.update(modalId, {
+          title: (mTitle.value || '').trim() || '(sem título)',
+          resp: respLabel || card?.resp || '',
+          respUid,
+          status: nextStatus,
+          due: dueIso,
+          desc: mDesc.value,
+          members,
+          routine,
+          gut, gutGrade, priority
+        });
+        closeModal();
+      };
+
+      btnDelete.onclick = async () => {
+        if (!modalId) return;
+        if (!confirm('Excluir este card permanentemente?')) return;
+        try {
+          btnDelete.disabled = true;
+          await Cards.remove(modalId);
+          closeModal();
+        } finally {
+          btnDelete.disabled = false;
+        }
+      };
+
+      // start
+      window.addEventListener('hashchange', () => {
+        if (location.hash.startsWith('#/kanban')) startLive();
+      });
+      function waitForAuth(cb) {
+        const ok = cloudOk && !!currentUser;
+        if (ok) return cb();
+        setTimeout(() => waitForAuth(cb), 120);
+      }
+      waitForAuth(startLive);
+
+      window.selectBoardTab = (b) => {
+        $$('.tab', tabs).forEach(x => x.classList.toggle('active', x.getAttribute('data-b') === b));
+        currentBoard = b; startLive();
+      };
+    })();
+
+
+    ; (function initMural() {
+      const list = document.querySelector('#mural-list');
+      const btnOpen = document.querySelector('#mu-open');
+      const btnMem = document.querySelector('#members-open');
+      const modal = document.querySelector('#muralModal');
+      const back = document.querySelector('#modalBack');
+      const btnClose = document.querySelector('#mu-close');
+      const btnPub = document.querySelector('#mu-publish');
+      const msg = document.querySelector('#mu-msg');
+      const inTitle = document.querySelector('#mu-title');
+      const inCat = document.querySelector('#mu-cat');
+      const inText = document.querySelector('#mu-text');
+      if (!list) return;
+
+      const showMsg = (type, text) => { if (!msg) return; msg.className = `msg ${type} show`; msg.textContent = text; };
+
+      function paint(arr) {
+        list.innerHTML = (arr || []).slice().reverse().map(m => `
+      <div class="comment">
+        <div style="font-weight:600">${m.title} · <span class="pill">${m.category}</span></div>
+        <div style="margin-top:4px">${m.text}</div>
+        <div class="meta" style="margin-top:4px">
+          ${new Date(m.createdAt).toLocaleString('pt-BR')} · ${m.authorName || '—'}
+        </div>
+      </div>
+    `).join('') || '<div class="muted">Sem comunicados.</div>';
+      }
+
+      // ---- Persistência (Firestore com fallback) ----
+      function localList() { return (LocalDB.load().mural || []); }
+      function localAdd(item) {
+        const all = LocalDB.load();
+        all.mural = all.mural || [];
+        all.mural.push(item);
+        LocalDB.save(all);
+      }
+
+      async function addMural({ title, category, text }) {
+        if (currentRole !== 'admin') { showMsg('err', 'Somente admin pode publicar.'); return; }
+        const createdAt = new Date().toISOString();
+        const author = currentUser?.uid || 'anon';
+        const authorName = currentUser?.displayName || currentUser?.email || '—';
+
+        if (cloudOk) {
+          try {
+            const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+            await addDoc(collection(db, 'mural'), { title, category, text, createdAt, author, authorName });
+            return;
+          } catch (e) {
+            console.warn('Mural Firestore add falhou, usando LocalDB:', e);
+          }
+        }
+        localAdd({ title, category, text, createdAt, author, authorName });
+      }
+
+      async function listenMural(cb) {
+        if (cloudOk) {
+          try {
+            const { collection, onSnapshot, orderBy, query } =
+              await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+            const qRef = query(collection(db, 'mural'), orderBy('createdAt', 'asc'));
+            return onSnapshot(
+              qRef,
+              snap => { const arr = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() })); cb(arr); },
+              err => { console.warn('Mural listen erro, fallback local:', err); cb(localList()); }
+            );
+          } catch (e) {
+            console.warn('Mural listen falhou, fallback local:', e);
+          }
+        }
+        cb(localList());
+        const t = setInterval(() => cb(localList()), 1200);
+        return () => clearInterval(t);
+      }
+
+      // ---- Permissões (apenas admin vê o botão) ----
+      function paintPermissions() {
+        if (btnOpen) btnOpen.classList.toggle('hidden', currentRole !== 'admin');
+        if (btnMem) btnMem.classList.toggle('hidden', currentRole !== 'admin');
+      }
+      document.addEventListener('auth:changed', paintPermissions);
+      paintPermissions();
+
+      // ---- Modal open/close ----
+      function openModal() {
+        if (currentRole !== 'admin') return;
+        msg?.classList.remove('show');
+        inTitle.value = ''; inText.value = ''; inCat.value = 'Geral';
+        modal.classList.add('show'); back.classList.add('show');
+      }
+      function closeModal() {
+        modal.classList.remove('show');
+        // mantém o backdrop se outros modais estiverem abertos
+        if (!document.querySelector('#cardModal.show') &&
+          !document.querySelector('#chatModal.show')) {
+          back.classList.remove('show');
+        }
+      }
+      btnOpen?.addEventListener('click', openModal);
+      btnClose?.addEventListener('click', closeModal);
+
+      // impedir que clique no backdrop feche todos (só o mural)
+      back?.addEventListener('click', () => {
+        if (modal.classList.contains('show')) closeModal();
+      });
+
+      // ---- Publicar (apenas admin) ----
+      btnPub?.addEventListener('click', async () => {
+        msg?.classList.remove('show');
+        const title = (inTitle?.value || '').trim();
+        const category = (inCat?.value || 'Geral');
+        const text = (inText?.value || '').trim();
+        if (!title || !text) { showMsg('err', 'Informe título e mensagem.'); return; }
+
+        try {
+          await addMural({ title, category, text });
+          showMsg('ok', 'Publicado no mural.');
+          setTimeout(closeModal, 300);
+        } catch (e) {
+          console.error(e);
+          showMsg('err', 'Não foi possível publicar agora.');
+        }
+      });
+
+      // ---- Live list ----
+      let stop = null;
+      (async () => { stop = await listenMural(paint); })();
+      document.addEventListener('auth:changed', async () => {
+        try { stop && stop(); } catch { }
+        stop = await listenMural(paint);
+      });
+    })();
+    /* ===========================
+       Bug Reporter
+    ============================ */
+    ; (function initBug() {
+      const HOOK = "https://discord.com/api/webhooks/1424818840596123812/PF5kyp0ctjPeBeUHkqI46y2iUPKM_23cWUypBUOel73sKtafOD7if3uqEAKi_h9fWiIM";
+      const view = $('#view-report'); if (!view) return;
+      const nameEl = view.querySelector('#name');
+      const emailEl = view.querySelector('#email');
+      const sevEl = view.querySelector('#severity');
+      const titleEl = view.querySelector('#title');
+      const descEl = view.querySelector('#desc');
+      const form = view.querySelector('#bugForm');
+      const btn = view.querySelector('#sendBtn');
+      const okMsg = view.querySelector('#msg-ok');
+      const errMsg = view.querySelector('#msg-err');
+
+      function setBusy(b) { btn.disabled = b; btn.textContent = b ? 'Enviando…' : 'Enviar'; }
+      function sevColor(sev) { return sev === 'Alta' ? 0xEF4444 : (sev === 'Baixa' ? 0x22C55E : 0xF59E0B); }
+
+      form?.addEventListener('submit', async (e) => {
+        e.preventDefault(); okMsg.classList.remove('show'); errMsg.classList.remove('show');
+        if (!titleEl.value.trim() || !descEl.value.trim()) { setMsg(errMsg, 'err', '⚠️ Preencha o título e a descrição.'); return; }
+        const now = new Date();
+        const embed = {
+          title: `[${sevEl.value}] ${titleEl.value.trim()}`,
+          color: sevColor(sevEl.value),
+          description: `${descEl.value.trim()}\n\n**Quem reportou:** ${nameEl.value.trim() || '—'}\n**E-mail:** ${emailEl.value.trim() || '—'}\n**Quando:** ${now.toLocaleString('pt-BR')}`,
+          footer: { text: 'Bug Reporter • ACIANexus' }
+        };
+        const payload = { username: 'ACIA Bug Reporter', embeds: [embed] };
+        setBusy(true);
+        try {
+          const resp = await fetch(HOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          form.reset(); setMsg(okMsg, 'ok', '✅ Obrigado! Seu relato foi enviado.');
+        } catch (err) { console.error(err); setMsg(errMsg, 'err', '⚠️ Não foi possível enviar agora.'); }
+        finally { setBusy(false); }
+      });
+    })();
+
+    /* ===========================
+   Membros (admin)
+============================ */
+    ; (function initMembers() {
+      const view = $('#view-members'); if (!view) return;
+      const list = $('#mb-list');
+      const addBtn = $('#mb-add');
+      const nameIn = $('#mb-name');
+      const emailIn = $('#mb-email');
+      const roleIn = $('#mb-role');
+      const msg = $('#memb-msg');
+
+      function setMsgTxt(type, text) { setMsg(msg, type, text); }
+
+      // render tabela simples
+      let unsubUsers = null;
+      async function startUsersLive() {
+        if (!cloudOk) { list.innerHTML = '<div class="muted">Entre com sua conta.</div>'; return; }
+        const { collection, onSnapshot, orderBy, query } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+        const qRef = query(collection(db, 'users'), orderBy('name', 'asc'));
+        if (unsubUsers) unsubUsers();
+        unsubUsers = onSnapshot(qRef, (snap) => {
+          const rows = [];
+          snap.forEach(d => {
+            const u = { id: d.id, ...d.data() };
+            rows.push(`
+  <div class="row user-row"
+       data-docid="${u.id}"
+       data-uid="${u.uid || u.id}"
+       data-role="${u.role || 'editor'}"
+       style="align-items:center;margin:6px 0">
+    <div class="field"><input value="${u.name || '—'}" disabled /></div>
+    <div class="field"><input value="${u.email || '—'}" disabled /></div>
+    <div class="field">
+      <select data-uid="${u.uid || u.id}">
+        <option value="viewer" ${u.role === 'viewer' ? 'selected' : ''}>viewer</option>
+        <option value="editor" ${(!u.role || u.role === 'editor') ? 'selected' : ''}>editor</option>
+        <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>admin</option>
+      </select>
+    </div>
+    <div class="field" style="display:flex;justify-content:flex-end">
+      <button class="btn secondary btn-del"
+              type="button"
+              title="Remover usuário"
+              ${currentRole !== 'admin' ? 'disabled' : ''}
+              style="border-color: rgba(239,68,68,.45)">
+        Excluir
+      </button>
+    </div>
+  </div>
+`);
+
+          });
+          list.innerHTML = rows.join('') || '<div class="muted">Sem membros.</div>';
+
+          // listeners de alteração de role
+          list.querySelectorAll('select[data-uid]').forEach(sel => {
+            sel.onchange = async () => {
+              if (currentRole !== 'admin') { setMsgTxt('err', 'Somente admin pode alterar papéis.'); sel.value = sel.getAttribute('value') || 'editor'; return; }
+              const uid = sel.getAttribute('data-uid');
+              const role = sel.value;
+              try {
+                const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+                await setDoc(doc(db, 'users', uid), { role }, { merge: true });
+                setMsgTxt('ok', 'Papel atualizado.');
+                // se alterar o próprio, força re-render global
+                if (uid === currentUser?.uid) {
+                  const evt = new Event('auth:changed'); document.dispatchEvent(evt);
+                }
+              } catch (e) { setMsgTxt('err', 'Falha ao alterar papel.'); }
+            };
+          });
+          // excluir usuário (apenas admin)
+          list.querySelectorAll('.btn-del').forEach(btn => {
+            btn.onclick = async () => {
+              if (currentRole !== 'admin') {
+                setMsgTxt('err', 'Somente admin pode excluir usuários.');
+                return;
+              }
+              const row = btn.closest('.user-row');
+              const docId = row?.getAttribute('data-docid');
+              const uid = row?.getAttribute('data-uid');
+              const role = row?.getAttribute('data-role');
+
+              // não permitir excluir a si mesmo
+              if (uid && currentUser?.uid && uid === currentUser.uid) {
+                setMsgTxt('err', 'Você não pode excluir a si mesmo.');
+                return;
+              }
+
+              // impedir apagar o último admin
+              const adminsCount = list.querySelectorAll('.user-row[data-role="admin"]').length;
+              if (role === 'admin' && adminsCount <= 1) {
+                setMsgTxt('err', 'Não é possível excluir o último administrador.');
+                return;
+              }
+
+              if (!docId) return;
+              const ok = confirm('Excluir este usuário? Isso remove apenas o registro em /users (não apaga a conta de login).');
+              if (!ok) return;
+
+              try {
+                const { doc, deleteDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+                await deleteDoc(doc(db, 'users', docId));
+                setMsgTxt('ok', 'Usuário removido.');
+              } catch (e) {
+                console.error(e);
+                setMsgTxt('err', 'Falha ao excluir. Verifique as regras do Firestore.');
+              }
+            };
+          });
+
+        });
+      }
+
+      addBtn.addEventListener('click', async () => {
+        if (currentRole !== 'admin') { setMsgTxt('err', 'Somente admin pode adicionar/atualizar.'); return; }
+        const email = (emailIn.value || '').trim().toLowerCase();
+        const name = (nameIn.value || '').trim() || null;
+        const role = roleIn.value || 'editor';
+        if (!email) { setMsgTxt('err', 'Informe um e-mail.'); return; }
+
+        try {
+          const { collection, query, where, getDocs, setDoc, doc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+          // procura por usuário já existente por e-mail
+          const q = query(collection(db, 'users'), where('email', '==', email));
+          const snap = await getDocs(q);
+
+          if (!snap.empty) {
+            // atualiza role do existente
+            const d = snap.docs[0];
+            await setDoc(doc(db, 'users', d.id), { role, name: name ?? d.data().name }, { merge: true });
+            setMsgTxt('ok', 'Usuário atualizado.');
+          } else {
+            // cria um "pré-cadastro" sem UID (será unido quando este email logar)
+            const tempId = `pre_${Date.now()}`;
+            await setDoc(doc(db, 'users', tempId), { email, name, role, placeholder: true, createdAt: new Date().toISOString() });
+            setMsgTxt('ok', 'Pré-cadastro criado. Quando essa pessoa fizer login, você pode ajustar/mesclar.');
+          }
+          emailIn.value = ''; nameIn.value = '';
+        } catch (e) { console.error(e); setMsgTxt('err', 'Não foi possível adicionar.'); }
+      });
+
+      ; (function initAuthView() {
+        const ALLOWED_DOMAIN = 'acia.com.br'; // mantém igual ao usado no initFirebase
+
+        const view = document.querySelector('#view-auth');
+        if (!view) return;
+
+        const tabLogin = document.querySelector('#auth-tab-login');
+        const tabRegister = document.querySelector('#auth-tab-register');
+        const paneLogin = document.querySelector('#loginForm');
+        const paneRegister = document.querySelector('#registerForm');
+
+        const loginEmail = document.querySelector('#auth-login-email');
+        const loginPass = document.querySelector('#auth-login-pass');
+        const loginMsg = document.querySelector('#auth-login-msg');
+        const loginBtn = document.querySelector('#auth-login-btn');
+        const btnForgot = document.querySelector('#auth-forgot');
+
+        const regName = document.querySelector('#auth-reg-name');
+        const regEmail = document.querySelector('#auth-reg-email');
+        const regPass = document.querySelector('#auth-reg-pass');
+        const regPass2 = document.querySelector('#auth-reg-pass2');
+        const regMsg = document.querySelector('#auth-reg-msg');
+        const regBtn = document.querySelector('#auth-reg-btn');
+
+        const toLogin = document.querySelector('#auth-to-login');
+        const toRegister = document.querySelector('#auth-to-register');
+
+        const setMsg = (el, type, text) => { el.className = `msg ${type} show`; el.textContent = text; };
+
+        function switchTab(which) {
+          const isLogin = which === 'login';
+          tabLogin.classList.toggle('active', isLogin);
+          tabRegister.classList.toggle('active', !isLogin);
+          paneLogin.classList.toggle('hidden', !isLogin);
+          paneRegister.classList.toggle('hidden', isLogin);
+          (isLogin ? loginEmail : regEmail).focus();
+        }
+
+        tabLogin.onclick = () => switchTab('login');
+        tabRegister.onclick = () => switchTab('register');
+        toLogin.onclick = () => switchTab('login');
+        toRegister.onclick = () => switchTab('register');
+
+        // Prefill vindo de outra ação
+        window.addEventListener('hashchange', () => {
+          if (location.hash.startsWith('#/entrar')) switchTab('login');
+        });
+
+        // LOGIN
+        paneLogin.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          loginMsg.classList.remove('show');
+
+          const email = (loginEmail.value || '').trim().toLowerCase();
+          const pass = loginPass.value || '';
+
+          if (!email.endsWith('@' + ALLOWED_DOMAIN)) {
+            setMsg(loginMsg, 'err', `Use um e-mail @${ALLOWED_DOMAIN}.`);
+            return;
+          }
+          if (!pass) {
+            setMsg(loginMsg, 'err', 'Informe a senha.');
+            return;
+          }
+
+          loginBtn.disabled = true; loginBtn.textContent = 'Entrando…';
+          try {
+            const { getAuth, signInWithEmailAndPassword, fetchSignInMethodsForEmail, sendPasswordResetEmail } =
+              await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+            const auth = getAuth();
+
+            try {
+              await signInWithEmailAndPassword(auth, email, pass);
+              setMsg(loginMsg, 'ok', 'Bem-vindo! Redirecionando…');
+              setTimeout(() => { location.hash = '#/kanban'; }, 500);
+            } catch (err) {
+              if (err.code === 'auth/invalid-credential') {
+                // Descobrir se é senha errada ou usuário inexistente
+                try {
+                  const methods = await fetchSignInMethodsForEmail(auth, email);
+                  if (!methods.length) {
+                    setMsg(loginMsg, 'err', 'Conta não encontrada. Clique em "Criar conta".');
+                    switchTab('register'); regEmail.value = email; regPass.focus();
+                  } else if (methods.includes('password')) {
+                    setMsg(loginMsg, 'err', 'Senha incorreta. Você pode redefinir abaixo.');
+                  } else {
+                    setMsg(loginMsg, 'err', `Este e-mail usa outro método: ${methods.join(', ')}`);
+                  }
+                } catch {
+                  setMsg(loginMsg, 'err', 'Não foi possível verificar sua conta agora.');
+                }
+              } else if (err.code === 'auth/operation-not-allowed') {
+                setMsg(loginMsg, 'err', 'Método Email/Senha está desativado no Firebase.');
+              } else {
+                setMsg(loginMsg, 'err', 'Falha no login. Tente novamente.');
+              }
+            }
+          } finally {
+            loginBtn.disabled = false; loginBtn.textContent = 'Entrar';
+          }
+        });
+
+        // RESET DE SENHA
+        btnForgot?.addEventListener('click', async (e) => {
+          e.preventDefault();
+          loginMsg.classList.remove('show');
+          const email = (loginEmail.value || '').trim().toLowerCase();
+          if (!email || !email.endsWith('@' + ALLOWED_DOMAIN)) {
+            setMsg(loginMsg, 'err', `Informe seu e-mail @${ALLOWED_DOMAIN} para redefinir.`);
+            return;
+          }
+          try {
+            const { getAuth, sendPasswordResetEmail } =
+              await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+            await sendPasswordResetEmail(getAuth(), email);
+            setMsg(loginMsg, 'ok', `Enviamos instruções para ${email}.`);
+          } catch (err) {
+            setMsg(loginMsg, 'err', 'Não foi possível enviar o e-mail de redefinição.');
+          }
+        });
+
+        // REGISTRO
+        paneRegister.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          regMsg.classList.remove('show');
+
+          const name = (regName.value || '').trim();
+          const email = (regEmail.value || '').trim().toLowerCase();
+          const pass = regPass.value || '';
+          const pass2 = regPass2.value || '';
+
+          if (!email.endsWith('@' + ALLOWED_DOMAIN)) {
+            setMsg(regMsg, 'err', `Use um e-mail @${ALLOWED_DOMAIN}.`);
+            return;
+          }
+          if (pass.length < 6) {
+            setMsg(regMsg, 'err', 'Senha muito curta (mín. 6).');
+            return;
+          }
+          if (pass !== pass2) {
+            setMsg(regMsg, 'err', 'As senhas não coincidem.');
+            return;
+          }
+
+          regBtn.disabled = true; regBtn.textContent = 'Criando…';
+          try {
+            const { getAuth, createUserWithEmailAndPassword, sendEmailVerification, updateProfile } =
+              await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+            const { getFirestore, doc, setDoc } =
+              await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+
+            const auth = getAuth();
+            const cred = await createUserWithEmailAndPassword(auth, email, pass);
+
+            // Nome de exibição (opcional)
+            if (name) {
+              try {
+                await updateProfile(cred.user, { displayName: name });
+                await cred.user.reload(); // <=== ADICIONE ISTO
+              } catch { }
+            }
+
+
+            // Cria/atualiza registro em /users (ajuda no painel de membros)
+            try {
+              const db = getFirestore();
+              await setDoc(doc(db, 'users', cred.user.uid), {
+                uid: cred.user.uid,
+                name: name || null,
+                email: email,
+                role: 'editor',
+                createdAt: new Date().toISOString()
+              }, { merge: true });
+            } catch { }
+
+            // Verificação por e-mail
+            try { await sendEmailVerification(cred.user); } catch { }
+
+            setMsg(regMsg, 'ok', 'Conta criada! Verifique seu e-mail antes de entrar.');
+            // Faz sign-out para forçar verificação antes do acesso
+            try { (await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js")).signOut(auth); } catch { }
+            setTimeout(() => switchTab('login'), 800);
+          } catch (err) {
+            if (err.code === 'auth/email-already-in-use') {
+              setMsg(regMsg, 'err', 'Este e-mail já está em uso. Tente entrar ou redefinir a senha.');
+              switchTab('login'); loginEmail.value = email; loginPass.focus();
+            } else if (err.code === 'auth/weak-password') {
+              setMsg(regMsg, 'err', 'Senha fraca (mín. 6).');
+            } else {
+              setMsg(regMsg, 'err', 'Não foi possível criar sua conta agora.');
+            }
+          } finally {
+            regBtn.disabled = false; regBtn.textContent = 'Criar conta';
+          }
+        });
+
+      })();
+
+
+      // rota
+      function paintMembersPermissions() {
+        addBtn.disabled = (currentRole !== 'admin');
+      }
+      document.addEventListener('auth:changed', () => { paintMembersPermissions(); startUsersLive(); });
+
+      // se já veio logado
+      startUsersLive();
+      paintMembersPermissions();
+    })();
+    /* ===========================
+ Indicadores (KPIs/Gráficos/XLSX)
+============================ */
+    ; (function initMetrics() {
+      const view = $('#view-metrics');
+      if (!view) return;
+
+      const kpisEl = $('#m-kpis');
+      const selBoard = $('#m-board');
+      const selPeriod = $('#m-period');
+      const btnRefresh = $('#m-refresh');
+      const btnExport = $('#m-export');
+
+      const ctxStatus = $('#chartStatus');
+      const ctxResp = $('#chartResp');
+      const ctxBoard = $('#chartBoard');
+
+      let charts = { status: null, resp: null, board: null };
+
+      function cssVar(name, fallback) {
+        const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        return v || fallback;
+      }
+      const colorText = cssVar('--text', '#e6eefc');
+      const colorGrid = 'rgba(148,163,184,.18)';
+
+      async function fetchAllCardsOnce() {
+        if (cloudOk) {
+          const { collection, getDocs, orderBy, query } =
+            await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+          const qRef = query(collection(db, 'cards'), orderBy('createdAt', 'asc'));
+          const snap = await getDocs(qRef);
+          const arr = []; snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+          return arr;
+        } else {
+          return LocalDB.list();
+        }
+      }
+
+      function filterCards(all) {
+        const b = selBoard.value || 'ALL';
+        const days = parseInt(selPeriod.value || '30', 10);
+        let rows = all.slice();
+
+        if (b !== 'ALL') rows = rows.filter(c => c.board === b);
+
+        if (Number.isFinite(days) && days > 0) {
+          const since = Date.now() - days * 864e5;
+          rows = rows.filter(c => {
+            const ts = Date.parse(c.createdAt || c.due || '');
+            return Number.isFinite(ts) ? (ts >= since) : true;
+          });
+        }
+        return rows;
+      }
+
+      function computeKPIs(list) {
+        const total = list.length;
+        const overdue = list.filter(c => c.due && new Date(c.due) < new Date()).length;
+        const exec = list.filter(c => c.status === 'EXECUÇÃO').length;
+        const pend = list.filter(c => ['PENDENTE', 'BACKLOG'].includes(c.status)).length;
+        const concl = list.filter(c => c.status === 'CONCLUÍDO').length;
+        return { total, overdue, exec, pend, concl };
+      }
+
+      function renderKPIs(list) {
+        const { total, overdue, exec, pend, concl } = computeKPIs(list);
+        const card = (t, v) => `<div class="kpi-card"><div class="kpi-title">${t}</div><div class="kpi-val">${v}</div></div>`;
+        kpisEl.innerHTML = [
+          card('Total', total),
+          card('Vencidos', overdue),
+          card('Em execução', exec),
+          card('Pendentes', pend),
+          card('Concluídos', concl),
+        ].join('');
+      }
+
+      function groupCount(list, key) {
+        const m = new Map();
+        for (const it of list) {
+          const k = (typeof key === 'function') ? key(it) : it[key];
+          if (!k) continue;
+          m.set(k, (m.get(k) || 0) + 1);
+        }
+        return m;
+      }
+
+      function destroyCharts() {
+        for (const k of Object.keys(charts)) {
+          try { charts[k]?.destroy?.(); } catch { }
+          charts[k] = null;
+        }
+      }
+
+      function drawCharts(list) {
+        destroyCharts();
+
+        // STATUS (doughnut)
+        const statusMap = groupCount(list, 'status');
+        const stLabels = Array.from(statusMap.keys());
+        const stValues = stLabels.map(k => statusMap.get(k));
+
+        charts.status = new Chart(ctxStatus, {
+          type: 'doughnut',
+          data: { labels: stLabels, datasets: [{ data: stValues }] },
+          options: {
+            plugins: {
+              legend: { labels: { color: colorText } }
+            }
+          }
+        });
+
+        // RESPONSÁVEL (bar) – top 12
+        const respMap = groupCount(list, c => c.resp || '—');
+        const respPairs = Array.from(respMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 12);
+        const respLabels = respPairs.map(p => p[0]);
+        const respValues = respPairs.map(p => p[1]);
+
+        charts.resp = new Chart(ctxResp, {
+          type: 'bar',
+          data: { labels: respLabels, datasets: [{ label: 'Cards', data: respValues }] },
+          options: {
+            plugins: { legend: { labels: { color: colorText } } },
+            scales: {
+              x: { ticks: { color: colorText }, grid: { color: colorGrid } },
+              y: { ticks: { color: colorText }, grid: { color: colorGrid }, beginAtZero: true, precision: 0 }
+            }
+          }
+        });
+
+        // BOARD (bar)
+        const boardMap = groupCount(list, 'board');
+        const bLabels = Array.from(boardMap.keys());
+        const bValues = bLabels.map(k => boardMap.get(k));
+
+        charts.board = new Chart(ctxBoard, {
+          type: 'bar',
+          data: { labels: bLabels, datasets: [{ label: 'Cards', data: bValues }] },
+          options: {
+            plugins: { legend: { labels: { color: colorText } } },
+            scales: {
+              x: { ticks: { color: colorText }, grid: { color: colorGrid } },
+              y: { ticks: { color: colorText }, grid: { color: colorGrid }, beginAtZero: true, precision: 0 }
+            }
+          }
+        });
+      }
+
+      function rowsToSheets(rows) {
+        const raw = rows.map(r => ({
+          id: r.id,
+          titulo: r.title || '',
+          board: r.board || '',
+          status: r.status || '',
+          responsavel: r.resp || '',
+          prazo: r.due ? new Date(r.due).toLocaleString('pt-BR') : '',
+          criadoEm: r.createdAt ? new Date(r.createdAt).toLocaleString('pt-BR') : '',
+          membros: Array.isArray(r.members) ? r.members.length : 0
+        }));
+
+        const kpis = computeKPIs(rows);
+        const resumo = Object.entries(kpis).map(([k, v]) => ({ metrica: k, valor: v }));
+
+        return { raw, resumo };
+      }
+
+      function exportXLSX(rows) {
+        const wb = XLSX.utils.book_new();
+        const { raw, resumo } = rowsToSheets(rows);
+
+        const ws1 = XLSX.utils.json_to_sheet(raw);
+        XLSX.utils.book_append_sheet(wb, ws1, 'Cards');
+
+        const ws2 = XLSX.utils.json_to_sheet(resumo);
+        XLSX.utils.book_append_sheet(wb, ws2, 'Resumo');
+
+        const now = new Date().toISOString().slice(0, 10);
+        XLSX.writeFile(wb, `acia-indicadores-${now}.xlsx`);
+      }
+
+      async function refresh() {
+        const all = await fetchAllCardsOnce();
+        const filtered = filterCards(all);
+        renderKPIs(filtered);
+        drawCharts(filtered);
+      }
+
+      btnRefresh?.addEventListener('click', refresh);
+      btnExport?.addEventListener('click', async () => {
+        const all = await fetchAllCardsOnce();
+        const filtered = filterCards(all);
+        exportXLSX(filtered);
+      });
+
+      // atualiza quando logar/deslogar ou ao entrar na rota
+      document.addEventListener('auth:changed', () => {
+        if (location.hash.startsWith('#/indicadores')) refresh();
+      });
+      window.addEventListener('hashchange', () => {
+        if (location.hash.startsWith('#/indicadores')) refresh();
+      });
+    })();
+
+
+    /* ===========================
+       Router + Boot
+    ============================ */
+    function renderRoute() {
+      const hash = location.hash || '#/';
+
+      if (cloudOk && !currentUser && !hash.startsWith('#/entrar')) {
+        location.hash = '#/entrar';
+        return;
+      }
+
+
+      // esconda TODOS os views sempre
+      const views = ['#view-home', '#view-create', '#view-kanban', '#view-report', '#view-members', '#view-metrics', '#view-auth'];
+      views.forEach(id => { const el = document.querySelector(id); el && el.classList.add('hidden'); });
+
+      // mostre só o view da rota atual
+      if (hash.startsWith('#/criar')) {
+        document.querySelector('#view-create')?.classList.remove('hidden');
+      } else if (hash.startsWith('#/kanban')) {
+        document.querySelector('#view-kanban')?.classList.remove('hidden');
+      } else if (hash.startsWith('#/reportar')) {
+        document.querySelector('#view-report')?.classList.remove('hidden');
+      } else if (hash.startsWith('#/membros')) {
+        document.querySelector('#view-members')?.classList.remove('hidden');
+      } else if (hash.startsWith('#/indicadores')) {
+        document.querySelector('#view-metrics')?.classList.remove('hidden');
+      } else if (hash.startsWith('#/entrar')) {
+        document.querySelector('#view-auth')?.classList.remove('hidden');
+      } else {
+        document.querySelector('#view-home')?.classList.remove('hidden');
+      }
+    }
+
+    window.addEventListener('hashchange', renderRoute);
+
+    (async function () {
+      await initFirebase();
+      renderRoute();
+    })();
+  </script>
+</body>
+
+</html>
