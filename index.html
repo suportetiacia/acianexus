@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ACIANexus • Kanbans</title>
+  <title>ACIANexus • Kanban</title>
   <!-- Charts e Excel (XLSX) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -783,7 +783,7 @@
       <img src="img/logoacianexus.png" alt="ACIA Nexus" class="brand-logo">
       <a href="#/" data-link>Home</a>
       <a href="#/criar" data-link>Criar tarefa</a>
-      <a href="#/kanban" data-link>Kanbans</a>
+      <a href="#/kanban" data-link>Kanban</a>
       <a href="#/indicadores" data-link>Indicadores</a>
       <a href="#/reportar" data-link>Suporte</a>
       <div class="spacer"></div>
@@ -894,7 +894,7 @@
 
     <section id="view-create" class="hidden">
       <div class="card" style="max-width:900px;margin:0 auto">
-        <h2 style="margin:0 0 10px">Criar Card</h2>
+        <h2 style="margin:0 0 10px">Criar tarefa</h2>
 
         <div class="row">
           <div class="field">
@@ -1043,7 +1043,7 @@
           <div class="tab" data-b="ROTINA">Rotina</div>
           <div class="tab" data-b="EVENTOS">Eventos</div>
           <div class="tab" data-b="COMERCIAL">Comercial</div>
-          <input id="k-q" type="search" placeholder="Buscar por título…" />          
+          <input id="k-q" type="search" placeholder="Buscar por título…" />
           <div style="display:flex;gap:8px;align-items:center">
             <select id="k-resp" title="Responsável"></select>
           </div>
@@ -1319,7 +1319,31 @@
         </p>
       </div>
 
-      <div class="field"><label for="m-desc">Descrição</label><textarea id="m-desc" rows="6"></textarea></div>
+      <!-- Descrição (modelo rápido) — EDITAR -->
+      <div class="card" id="m-desc-model" style="margin:6px 0">
+        <h4 style="margin:0 0 6px">Descrição (modelo rápido)</h4>
+        <div class="row">
+          <div class="field">
+            <label for="m-md-objetivo">Objetivo</label>
+            <input id="m-md-objetivo" type="text" placeholder="O que se deseja alcançar?" />
+          </div>
+          <div class="field">
+            <label for="m-md-acoes">Ações</label>
+            <input id="m-md-acoes" type="text" placeholder="Separe por vírgulas: ação 1, ação 2..." />
+          </div>
+        </div>
+        <div class="field">
+          <label for="m-md-info">Informações adicionais</label>
+          <input id="m-md-info" type="text" placeholder="Restrições, links, contexto..." />
+        </div>
+        <p class="muted" style="margin:6px 0 0;font-size:12px">
+          Estes campos preenchem automaticamente a descrição abaixo, igual no Criar.
+        </p>
+      </div>
+
+
+
+      <div class="field hidden"><label for="m-desc">Descrição</label><textarea id="m-desc" rows="6"></textarea></div>
 
       <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px">
         <div>
@@ -1337,7 +1361,8 @@
             <input id="m-new-attach" type="url" placeholder="https://link-do-arquivo" />
             <button id="m-send-attach" class="btn secondary" type="button">Adicionar</button>
           </div>
-          <p class="muted" style="font-size:12px;margin:6px 0 0">Firebase Storage não incluído (por enquanto 😉)</p>
+          <p class="muted" style="font-size:12px;margin:6px 0 0">Firebase Storage não incluído (por enquanto 😉)
+          </p>
         </div>
       </div>
     </div>
@@ -1519,6 +1544,7 @@ Listar todas as informações pertinentes que contribuam para a ação mais efet
     };
 
     let cloudOk = false, app = null, db = null, auth = null, currentUser = null, currentRole = 'editor';
+
 
     async function initFirebase() {
       try {
@@ -1708,7 +1734,7 @@ Listar todas as informações pertinentes que contribuam para a ação mais efet
           desc: card.desc || '',
           board: card.board || 'PLANEJAMENTO',
           status: (card.status || FLOWS[card.board || 'PLANEJAMENTO'][0]),
-          resp: card.resp || ALL_RESP[0],
+          resp: card.resp,
           respUid: card.respUid || null,                 // NOVO
           due: card.due || null,
           createdAt: new Date().toISOString(),
@@ -2082,22 +2108,26 @@ Contexto:
         try { unsubUsersForCreate && unsubUsersForCreate(); } catch { }
         unsubUsersForCreate = null;
 
-        if (!cloudOk) {
+        // Fallback (no cloud or db not ready yet)
+        if (!cloudOk || !db) {
           try {
             const arr = (await Members.list()).filter(m => (m.role || 'editor') !== 'viewer');
+
+            // Build options safely (no undefined var in ternary)
             const respOpts = arr.length
-              ? arr.map(u => `<option value="${(u.displayName || u.email || '—')}">${(u.displayName || u.email || '—')}</option>`).join('')
-              : ALL_RESP.map(n => `<option value="${n}">${n}</option>`).join('');
+              ? arr.map(u => `<option value="${u.id}">${u.displayName || u.email || u.id}</option>`).join('')
+              : '<option value="">—</option>';
+
             cResp.innerHTML = respOpts;
             cMembers.innerHTML = arr.map(u => `<option value="${u.id}">${u.displayName || u.email || u.id}</option>`).join('');
-            return;
           } catch {
-            cResp.innerHTML = ALL_RESP.map(n => `<option value="${n}">${n}</option>`).join('');
+            cResp.innerHTML = '<option value="">—</option>';
             cMembers.innerHTML = '';
-            return;
           }
+          return;
         }
 
+        // Cloud path
         const { collection, onSnapshot, orderBy, query } =
           await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
 
@@ -2105,11 +2135,11 @@ Contexto:
         unsubUsersForCreate = onSnapshot(qRef, (snap) => {
           const users = [];
           snap.forEach(d => {
-            const u = { id: d.id, ...d.data() };
+            const u = d.data();
             if (u.placeholder) return;
             const uid = u.uid || d.id;
             const label = u.name || u.email || uid;
-            users.push({ uid, label, role: u.role || 'editor' });
+            users.push({ uid, label });
           });
 
           cResp.innerHTML = users.map(u =>
@@ -2121,6 +2151,7 @@ Contexto:
           ).join('');
         });
       }
+
       document.addEventListener('auth:changed', bindUsersToCreate);
       bindUsersToCreate();
 
@@ -2317,9 +2348,9 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
         if (unsubUsersDir) { try { unsubUsersDir(); } catch { } }
         userDir.clear();
 
-        if (!cloudOk) {
-          kResp.innerHTML = '<option value="ALL" selected>Todos</option>' +
-            ALL_RESP.map(n => `<option value="${n}">${n}</option>`).join('');
+        // If Firestore not ready, paint minimal “Todos” option and bail
+        if (!cloudOk || !db) {
+          kResp.innerHTML = '<option value="ALL" selected>Todos</option>';
           return;
         }
 
@@ -2341,6 +2372,7 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
           kResp.innerHTML = opts.join('');
         });
       }
+
       document.addEventListener('auth:changed', bindUsersToKanbanFilter);
       bindUsersToKanbanFilter();
 
@@ -2406,54 +2438,169 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
       const mChecklist = $('#m-checklist'), mChkNew = $('#m-new-check'), mChkAdd = $('#m-add-check');
       const btnClose = $('#m-close'), btnSave = $('#m-save'), btnDelete = $('#m-delete');
 
+      // —— Modelo rápido (EDITAR) ——
+      // refs dos inputs do modelo
+      const mMdObj = $('#m-md-objetivo');
+      const mMdAco = $('#m-md-acoes');
+      const mMdInf = $('#m-md-info');
+
+      // monta o texto completo a partir dos 3 campos (igual ao Criar)
+      function mBuildDescFromModel() {
+        const obj = (mMdObj?.value || '').trim();
+        const aco = (mMdAco?.value || '').trim();
+        const inf = (mMdInf?.value || '').trim();
+        return `TAREFA QUE DEVE SER FEITA
+${aco || 'Descrever todas as ações que devem ser aplicadas para a execução e entrega da tarefa, com excelência.'}
+
+OBJETIVO DA TAREFA
+${obj || 'Descrever qual é a razão da execução desta tarefa e qual o resultado esperado.'}
+
+INFORMAÇÕES ADICIONAIS
+${inf || 'Listar todas as informações pertinentes que contribuam para a ação mais efetiva e assertiva em sua execução.'}`;
+      }
+
+      // extrai Objetivo / Ações / Info da descrição já salva
+      function parseDescSections(descText) {
+        const text = (descText || '').replace(/\r/g, '').trim();
+        const H1 = /TAREFA QUE DEVE SER FEITA/i;
+        const H2 = /OBJETIVO DA TAREFA/i;
+        const H3 = /INFORMAÇÕES ADICIONAIS/i;
+
+        const sections = { acoes: '', objetivo: '', info: '' };
+        if (!text) return sections;
+
+        const i1 = text.search(H1);
+        const i2 = text.search(H2);
+        const i3 = text.search(H3);
+
+        function sliceAfterHeader(hIdx, nextIdx) {
+          if (hIdx < 0) return '';
+          // pega a linha seguinte ao header
+          const nl = text.indexOf('\n', hIdx);
+          const start = nl >= 0 ? nl + 1 : hIdx;
+          const end = nextIdx >= 0 ? nextIdx : text.length;
+          return text.slice(start, end).trim();
+        }
+
+        if (i1 >= 0 && i2 >= 0) sections.acoes = sliceAfterHeader(i1, i2);
+        else if (i1 >= 0) sections.acoes = sliceAfterHeader(i1, -1);
+
+        if (i2 >= 0 && i3 >= 0) sections.objetivo = sliceAfterHeader(i2, i3);
+        else if (i2 >= 0) sections.objetivo = sliceAfterHeader(i2, -1);
+
+        if (i3 >= 0) sections.info = sliceAfterHeader(i3, -1);
+
+        // normaliza quebras de linha em lista separada por vírgulas para o campo "Ações"
+        if (sections.acoes) {
+          sections.acoes = sections.acoes.split(/\n+/).map(s => s.trim()).filter(Boolean).join(', ');
+        }
+        return sections;
+      }
+
+      // sincronização bi-direcional (evita loop)
+      let mModelUpdating = false;
+      function syncModelToDesc() {
+        if (mModelUpdating) return;
+        mModelUpdating = true;
+        if (mDesc) mDesc.value = mBuildDescFromModel();
+        mModelUpdating = false;
+      }
+      function syncDescToModel() {
+        if (mModelUpdating) return;
+        mModelUpdating = true;
+        const parts = parseDescSections(mDesc?.value || '');
+        if (mMdObj) mMdObj.value = parts.objetivo || '';
+        if (mMdAco) mMdAco.value = parts.acoes || '';
+        if (mMdInf) mMdInf.value = parts.info || '';
+        mModelUpdating = false;
+      }
+
+      // listeners
+      ['input', 'change'].forEach(ev => {
+        mMdObj?.addEventListener(ev, syncModelToDesc);
+        mMdAco?.addEventListener(ev, syncModelToDesc);
+        mMdInf?.addEventListener(ev, syncModelToDesc);
+      });
+      // Se o usuário editar o texto bruto, re-preenche os 3 campos
+      mDesc?.addEventListener('input', syncDescToModel);
+
+
       // popula responsável+membros no modal
       // ==== cache global p/ modal ====
       let usersCache = []; // [{uid, label}]
       let pendingModalSelection = null;
       // { respUid: string|null, respLabel: string|null, memberUids: string[], memberLabels: string[] }
 
+      // cache already declared above in your code:
+      // let usersCache = []; 
+      // let pendingModalSelection = null;
+
+      let unsubUsersForEdit = null;
       async function bindUsersToEdit() {
-        // fallback local (sem cloud)
-        if (!cloudOk) {
-          const opts = ALL_RESP.map(n => `<option value="${n}" data-label="${n}">${n}</option>`).join('');
-          mResp.innerHTML = opts;
-          mMembers.innerHTML = ''; // sem base local de membros
-          usersCache = ALL_RESP.map(n => ({ uid: n, label: n }));
-          // aplica seleção pendente, se houver
-          applyPendingSelection();
+        // limpa listener anterior
+        try { unsubUsersForEdit && unsubUsersForEdit(); } catch { }
+        unsubUsersForEdit = null;
+
+        // helper para pintar as opções
+        const paint = (rows) => {
+          // rows: [{ uid, label }]
+          const baseResp = '<option value="">—</option>';
+          mResp.innerHTML = baseResp + rows.map(u => `<option value="${u.uid}" data-label="${u.label}">${u.label}</option>`).join('');
+          mMembers.innerHTML = rows.map(u => `<option value="${u.uid}">${u.label}</option>`).join('');
+          // tenta aplicar seleção pendente (resp/membros) se houver
+          applyPendingSelection?.();
+        };
+
+        // Fallback local (ou Firestore ainda não pronto)
+        if (!cloudOk || !db) {
+          try {
+            const arr = (await Members.list()) || []; // [{id,displayName,email,role}]
+            const rows = arr
+              .filter(m => (m.role || 'editor') !== 'viewer')
+              .map(m => ({ uid: m.id, label: m.displayName || m.email || m.id }));
+            paint(rows);
+          } catch {
+            paint([]);
+          }
           return;
         }
 
-        const { collection, onSnapshot, orderBy, query } =
+        // Cloud path: primeiro tentamos /users; se vier vazio, tentamos /members
+        const { collection, onSnapshot, orderBy, query, getDocs } =
           await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
 
-        const qRef = query(collection(db, 'users'), orderBy('name', 'asc'));
+        const qUsers = query(collection(db, 'users'), orderBy('name', 'asc'));
 
-        onSnapshot(qRef, (snap) => {
-          const users = [];
+        unsubUsersForEdit = onSnapshot(qUsers, async (snap) => {
+          let rows = [];
           snap.forEach(d => {
             const u = d.data();
-            if (u.placeholder) return;
             const uid = u.uid || d.id;
-            const label = u.name || u.email || uid;
-            users.push({ uid, label });
+            // inclui placeholders, mas marca no rótulo
+            if (u.placeholder) return; // pula pré-cadastro
+            const lab = u.name || u.email || uid;
+
+            rows.push({ uid, label: lab });
           });
 
-          usersCache = users.slice();
+          // Se /users vier vazio, tenta /members como fallback
+          if (rows.length === 0) {
+            try {
+              const mSnap = await getDocs(collection(db, 'members'));
+              rows = [];
+              mSnap.forEach(d => {
+                const m = d.data();
+                rows.push({ uid: d.id, label: m.displayName || m.email || d.id });
+              });
+            } catch { }
+          }
 
-          // popular selects
-          mResp.innerHTML = usersCache
-            .map(u => `<option value="${u.uid}" data-label="${u.label}">${u.label}</option>`)
-            .join('');
-
-          mMembers.innerHTML = usersCache
-            .map(u => `<option value="${u.uid}">${u.label}</option>`)
-            .join('');
-
-          // tentar aplicar qualquer seleção que o modal tenha pedido
-          applyPendingSelection();
+          // pinta selects (com opção "—" no responsável)
+          paint(rows);
         });
       }
+
+
 
       // aplica seleção pendente no modal (responsável e membros)
       function applyPendingSelection() {
@@ -2775,8 +2922,17 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
       function openModal(card) {
         modalId = card.id;
         $('#m-title').textContent = `Editar: ${card.title}`;
+        // garante que os selects tenham opções quando o modal abrir
+        if (mResp.options.length === 0 || mMembers.options.length === 0) {
+          try { bindUsersToEdit(); } catch { }
+        }
+
         mTitle.value = card.title || '';
         mDesc.value = card.desc || '';
+
+        // pré-preenche os 3 campos do modelo a partir da descrição existente
+        syncDescToModel();
+
 
         if (card.due) {
           const d = new Date(card.due);
@@ -2858,7 +3014,8 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
 
         const canEdit = (currentRole !== 'viewer') && !!currentUser;
         [mTitle, mResp, mStatus, mDue, mDesc, mASend, btnSave, mChkAdd,
-          mG, mU, mT, mMembers, mRtEnabled, mRtKind, btnChatOpen].forEach(el => el && (el.disabled = !canEdit));
+          mG, mU, mT, mMembers, mRtEnabled, mRtKind, btnChatOpen,
+          mMdObj, mMdAco, mMdInf].forEach(el => el && (el.disabled = !canEdit));
         btnDelete.disabled = (currentRole !== 'admin');
         btnDelete.classList.toggle('hidden', currentRole !== 'admin');
 
