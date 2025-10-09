@@ -998,18 +998,17 @@
         <!-- ROTINA -->
         <div id="rt-block" class="card hidden" style="margin:12px 0 14px">
           <div class="card" style="margin:12px 0 14px">
-            <h3 style="margin:0 0 8px">Rotina (opcional)</h3>
+            <h3 style="margin:0 0 8px">Rotina</h3>
             <div class="row">
               <div class="field">
                 <label for="c-rt-enabled">Ativar rotina</label>
-                <select id="c-rt-enabled">
-                  <option value="off">Desativada</option>
+                <select required id="c-rt-enabled">
                   <option value="on">Ativada</option>
                 </select>
               </div>
               <div class="field">
                 <label for="c-rt-kind">Periodicidade</label>
-                <select id="c-rt-kind">
+                <select required id="c-rt-kind">
                   <option value="DAILY">Diariamente</option>
                   <option value="WEEKLY">Semanalmente</option>
                   <option value="BIWEEKLY">Quinzenalmente</option>
@@ -1211,6 +1210,7 @@
             <option>RH</option>
             <option>Operações</option>
             <option>Geral</option>
+            <option>Sistema</option>
           </select>
         </div>
       </div>
@@ -1288,10 +1288,10 @@
       </div>
 
       <!-- Rotina -->
-      <div id="m-rt-block" class="card" style="margin:6px 0">
+      <div id="m-rt-block" class="card hidden" style="margin:6px 0">
         <h4 style="margin:0 0 6px">Rotina</h4>
-        <div class="row">
-          <div class="field">
+        <div class="row hidden">
+          <div class="field hidden">
             <label for="m-rt-enabled">Ativar rotina</label>
             <select id="m-rt-enabled">
               <option value="off">Desativada</option>
