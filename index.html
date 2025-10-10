@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ACIANexus • Kanban</title>
+  <title>ACIANexus</title>
   <!-- Charts e Excel (XLSX) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -1185,9 +1185,9 @@
         <div id="msg-err" class="msg err">⚠️ Não foi possível enviar agora. Tente novamente.</div>
         <form id="bugForm" novalidate>
           <div class="row">
-            <div class="field"><label for="name">Seu nome (opcional)</label><input id="name" type="text"
+            <div class="field"><label for="name">Seu nome</label><input id="name" type="text"
                 placeholder="Ex.: Maria Silva" /></div>
-            <div class="field"><label for="email">Seu e-mail (opcional)</label><input id="email" type="email"
+            <div class="field"><label for="email">Seu e-mail</label><input id="email" type="email"
                 placeholder="Ex.: maria@empresa.com" /></div>
           </div>
           <div class="row">
@@ -1333,8 +1333,9 @@
       </div>
 
       <!-- GUT/Prioridade -->
-      <div class="card" style="margin:6px 0">
+      <div class="row" style="margin:6px 0">
         <h4 style="margin:0 0 6px">GUT & Prioridade</h4>
+        <br>
         <div class="row">
           <div class="field"><label for="m-g">Gravidade (G)</label><input id="m-g" type="number" min="1" max="10" />
           </div>
@@ -1396,8 +1397,9 @@
       </div>
 
       <!-- Descrição (modelo rápido) — EDITAR -->
-      <div class="card" id="m-desc-model" style="margin:6px 0">
+      <div class="row" id="m-desc-model" style="margin:6px 0">
         <h4 style="margin:0 0 6px">Descrição (modelo rápido)</h4>
+        <br>
         <div class="row">
           <div class="field">
             <label for="m-md-objetivo">Objetivo</label>
