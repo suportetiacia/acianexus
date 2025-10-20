@@ -5,7 +5,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ACIANexus • Kanban</title>
-  <!-- Charts e Excel (XLSX) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
@@ -43,7 +42,6 @@
 
     .brand-logo {
       height: 28px;
-      /* ajuste se quiser maior/menor */
       width: auto;
       display: block;
     }
@@ -68,7 +66,6 @@
       }
     }
 
-    /* ---------- Cabeçalho do card (título “box”) por GUT ---------- */
     .card-item .title {
       font-weight: 700;
       padding: 6px 8px;
@@ -138,7 +135,7 @@
     /* Fundo padrão ACIA Nexus */
     body {
       margin: 0;
-      font-family: "Montserrat", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial;
+      font-family: "Montserrat";
       background:
         radial-gradient(1200px 600px at 20% -10%, rgba(59, 130, 246, .12), transparent 60%),
         radial-gradient(800px 400px at 120% 10%, rgba(29, 78, 216, .10), transparent 70%),
@@ -701,7 +698,6 @@
         padding: 10px 14px;
       }
 
-      /* já existe a quebra das cols no seu CSS, reforço tipográfico: */
       .modal .cols {
         grid-template-columns: 1fr;
         gap: 8px;
@@ -718,7 +714,6 @@
       }
     }
 
-    /* Evita estouro de linha em anexos/URLs longas e comentários */
     #m-attachments .comment a {
       word-break: break-all;
     }
@@ -752,10 +747,8 @@
       box-shadow: var(--focus-ring);
     }
 
-    /* Dá respiro visual na lista da checklist dentro do modal */
     #m-checklist {
       padding-right: 6px;
-      /* espaço pro scroll não cobrir o texto */
     }
 
     #m-checklist label {
@@ -774,64 +767,93 @@
       background: linear-gradient(180deg, rgba(239, 68, 68, .22), rgba(239, 68, 68, .12));
       border-color: rgba(239, 68, 68, .50);
     }
-  
-/* =========================
-   Anti-overflow for cards
-   ========================= */
-.kanban .card, .card { min-width: 0; }
-.column .cards > * { min-width: 0; }
 
-/* Title: clamp to 2 lines, break long words/URLs */
-.card h4, .card .title, .card-title, .k-card-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-}
+    .kanban .card,
+    .card {
+      min-width: 0;
+    }
 
-/* Badges row: wrap and ellipsize each badge */
-.title-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-  min-width: 0;
-}
-.title-badges .badge {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.title-badges .badge[data-parent-id] { cursor: pointer; }
+    .column .cards>* {
+      min-width: 0;
+    }
 
-/* Optional: clamp any card preview/desc blocks to 3 lines */
-.card .desc, .card .preview, .card .body, .card .content {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-}
+    .card h4,
+    .card .title,
+    .card-title,
+    .k-card-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
 
+    /* Badges row: wrap and ellipsize each badge */
+    .title-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      min-width: 0;
+    }
 
-/* Clip inner content to rounded corners and prevent overflow */
-.card { overflow: hidden; min-width: 0; }
+    .title-badges .badge {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
-/* Make title row respect container width */
-.card .title { min-width: 0; max-width: 100%; }
+    .title-badges .badge[data-parent-id] {
+      cursor: pointer;
+    }
 
-/* Ensure badges container wraps and doesn't overflow */
-.title-badges { flex-wrap: wrap !important; white-space: normal !important; min-width: 0; max-width: 100%; }
-.title-badges .badge { max-width: 100%; }
+    /* Optional: clamp any card preview/desc blocks to 3 lines */
+    .card .desc,
+    .card .preview,
+    .card .body,
+    .card .content {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+    }
 
-/* If any header strip uses background, round its corners to match card */
-.card .head, .card .header, .card .title { border-top-left-radius: inherit; border-top-right-radius: inherit; }
+    /* Clip inner content to rounded corners and prevent overflow */
+    .card {
+      overflow: hidden;
+      min-width: 0;
+    }
 
-</style>
+    /* Make title row respect container width */
+    .card .title {
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    /* Ensure badges container wraps and doesn't overflow */
+    .title-badges {
+      flex-wrap: wrap !important;
+      white-space: normal !important;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .title-badges .badge {
+      max-width: 100%;
+    }
+
+    /* If any header strip uses background, round its corners to match card */
+    .card .head,
+    .card .header,
+    .card .title {
+      border-top-left-radius: inherit;
+      border-top-right-radius: inherit;
+    }
+  </style>
 </head>
 
 <body>
@@ -845,7 +867,7 @@
       <a href="#/reportar" data-link>Suporte</a>
       <div class="spacer"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
-        <!-- <button id="mu-open" class="btn hidden" type="button">Novo comunicado</button> -->
+        <!-- <button id="mu-open" class="btn hidden" type="button">Novo Comunicado</button> -->
         <a id="members-open" class="hidden" href="#/membros" data-link>Membros</a>
       </div>
       <span class="chip" id="authChip">Offline</span>
@@ -879,7 +901,7 @@
         <div id="mural-list" style="display:flex;flex-direction:column;gap:10px"></div>
 
         <div style="display:flex;gap:8px;justify-content:flex-end">
-          <button id="mu-open" class="btn hidden" type="button">Novo comunicado</button>
+          <button id="mu-open" class="btn hidden" type="button">Novo Comunicado</button>
         </div>
       </div>
     </section>
@@ -951,7 +973,7 @@
 
     <section id="view-create" class="hidden">
       <div class="card" style="max-width:900px;margin:0 auto">
-        <h2 style="margin:0 0 10px">Criar tarefa</h2>
+        <h2 style="margin:0 0 10px">Criar Tarefa</h2>
 
         <div class="row">
           <div class="field">
@@ -961,10 +983,10 @@
           <div class="field">
             <label for="c-board">Kanban</label>
             <select id="c-board">
-              <option value="PLANEJAMENTO">Planejamento</option>
-              <option value="ROTINA">Rotina</option>
+              <option value="PROJETOS">Projetos</option>
+              <option value="ROTINAS">Rotinas</option>
               <option value="EVENTOS">Eventos</option>
-              <option value="COMERCIAL">Comercial</option>
+              <option value="VENDAS">Vendas</option>
               <!--<option value="COMPRAS">Compras</option>-->
             </select>
           </div>
@@ -981,123 +1003,134 @@
           </div>
         </div>
         <div class="card" style="margin:12px 0 14px">
-          <h3 style="margin:0 0 8px">GUT (1–5)</h3>
-          <div class="row">
-            <div class="field">
-              <label for="c-g">Gravidade (G)</label>
-              <input id="c-g" type="number" min="1" max="5" value="5" />
-            </div>
-            <div class="field">
-              <label for="c-u">Urgência (U)</label>
-              <input id="c-u" type="number" min="1" max="5" value="5" />
-            </div>
-          </div>
-          <div class="row">
-            <div class="field">
-              <label for="c-t">Tendência (T)</label>
-              <input id="c-t" type="number" min="1" max="5" value="5" />
-            </div>
-            <div class="field">
-              <label>Resultado (G×U×T)</label>
-              <input id="c-gut" type="text" disabled value="125" />
-            </div>
-          </div>
-        </div>
-
-        <!-- MEMBROS DO CARD -->
-        <div class="row">
-          <div class="field" style="grid-column: 1 / -1">
-            <label for="c-members">Responsável(eis) Envolvido(s)</label>
-            <select id="c-members" multiple size="6"></select>
-            <div class="muted" style="font-size:12px;margin-top:6px">
-              Segure Ctrl (Windows) ou ⌘ (Mac) para selecionar vários.
-            </div>
-          
-        <!-- Tarefa linkada (subtarefa) -->
-        <div class="row">
-          <div class="field" style="grid-column: 1 / -1">
-            <label for="c-parent">Tarefa linkada com</label>
-            <select id="c-parent">
-              <option value="">—Nenhuma—</option>
-            </select>
-            <div class="muted" style="font-size:12px;margin-top:6px">Use para vincular esta tarefa como subtarefa de uma tarefa‑mãe.</div>
-          </div>
-        </div>
-
-        <!-- Descrição (modelo rápido) -->
-        <div class="card" style="margin:12px 0">
-          <h3 style="margin:0 0 8px">Descrição (modelo rápido)</h3>
-          <div class="row">
-            <div class="field">
-              <label for="md-objetivo">Objetivo</label>
-              <input id="md-objetivo" type="textarea" placeholder="O que se deseja alcançar?" />
-            </div>
-            <div class="field">
-              <label for="md-acoes">Ações</label>
-              <input id="md-acoes" type="textarea" placeholder="Separe por vírgulas: ação 1, ação 2..." />
-            </div>
-          </div>
-          <div class="field">
-            <label for="md-info">Informações adicionais</label>
-            <input id="md-info" type="textarea" placeholder="Restrições, links, contexto..." />
-          </div>
-          <!-- botão antigo removido -->
-        </div>
-
-        <!-- Descrição (agora oculta, preenchida automaticamente) -->
-        <textarea id="c-desc" hidden></textarea>
-
-        <!-- Checklist (gerada do modelo) -->
-        <div>
-          <h4 style="margin:10px 0 6px">Checklist (gerada do modelo)</h4>
-          <div id="c-checklist"></div>
-        </div>
-
-        <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
-          <!-- botão de IA removido -->
-          <button id="c-create" class="btn" type="button">Criar card</button>
-          <span id="c-msg" class="msg"></span>
-        </div>
-
-
-
-
-        <!-- ROTINA -->
-        <div id="rt-block" class="card hidden" style="margin:12px 0 14px">
-          <div class="card" style="margin:12px 0 14px">
-            <h3 style="margin:0 0 8px">Rotina</h3>
-            <div class="row">
+          <div id="c-gut-block" class="card" style="margin:12px 0 14px">
+            <h3 style="margin:0 0 8px">GUT (1–5)</h3>
+            <div class="row" style="grid-template-columns: repeat(4, 1fr)">
               <div class="field">
-                <label for="c-rt-enabled">Ativar rotina</label>
-                <select required id="c-rt-enabled">
-                  <option value="on">Ativada</option>
-                </select>
+                <label for="c-g">G</label>
+                <input id="c-g" type="number" min="1" max="10" value="5" />
               </div>
               <div class="field">
-                <label for="c-rt-kind">Periodicidade</label>
-                <select required id="c-rt-kind">
-                  <option value="DAILY">Diariamente</option>
-                  <option value="WEEKLY">Semanalmente</option>
-                  <option value="BIWEEKLY">Quinzenalmente</option>
-                  <option value="MONTHLY">Mensalmente</option>
-                  <option value="MON">Toda segunda</option>
-                  <option value="TUE">Toda terça</option>
-                  <option value="WED">Toda quarta</option>
-                  <option value="THU">Toda quinta</option>
-                  <option value="FRI">Toda sexta</option>
-                </select>
+                <label for="c-u">U</label>
+                <input id="c-u" type="number" min="1" max="10" value="5" />
+              </div>
+              <div class="field">
+                <label for="c-t">T</label>
+                <input id="c-t" type="number" min="1" max="10" value="5" />
+              </div>
+              <div class="field">
+                <label>Total (G×U×T)</label>
+                <input id="c-gut" type="text" disabled value="125" />
               </div>
             </div>
-            <p class="muted" style="margin:6px 0 0;font-size:12px">
-              Os prazos das tarefas rotineiras, são definidos por cada responsável. Quando o prazo é vencido, a tarefa é gerada novamente e aplicada no início do fluxo automaticamente.
-            </p>
           </div>
-        </div>
+          <!-- MEMBROS DO CARD -->
 
-        <div>
-          <div id="c-checklist"></div>
-        </div>
-      </div>
+
+          <!-- MEMBROS DO CARD -->
+          <div class="row">
+            <div class="field" style="grid-column: 1 / -1">
+              <label for="c-members">Responsável(eis) Envolvido(s)</label>
+              <select id="c-members" multiple size="6"></select>
+              <div class="muted" style="font-size:12px;margin-top:6px">
+                Segure Ctrl (Windows) ou ⌘ (Mac) para selecionar vários.
+              </div>
+
+              <!-- Tarefa linkada (subtarefa) -->
+              <div class="row">
+                <div class="field" style="grid-column: 1 / -1">
+                  <label for="c-parent">Tarefa linkada com</label>
+                  <select id="c-parent">
+                    <option value="">—Nenhuma—</option>
+                  </select>
+                  <div class="muted" style="font-size:12px;margin-top:6px">Use para vincular esta tarefa como subtarefa
+                    de
+                    uma tarefa‑mãe.</div>
+                </div>
+              </div>
+
+              <!-- Descritivo da Tarefa -->
+              <!-- Descritivo da Tarefa -->
+              <div class="card" style="margin:12px 0">
+                <h3 style="margin:0 0 8px">Descritivo da Tarefa</h3>
+                <div class="row">
+                  <div class="field">
+                    <label for="md-acoes">Descrever a Tarefa</label>
+                    <textarea id="md-acoes" placeholder="Liste as ações que devem ser feitas, uma por linha"></textarea>
+                  </div>
+                  <div class="field">
+                    <label for="md-objetivo">Objetivo da Tarefa</label>
+                    <textarea id="md-objetivo" placeholder="Qual o resultado esperado?"></textarea>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="md-info">Informações Adicionais</label>
+                  <textarea id="md-info" placeholder="Restrições, links e contexto relevantes"></textarea>
+                </div>
+                <div class="field" style="display:flex;gap:8px;align-items:center;margin-top:6px">
+                  <input id="c-new-check" type="text" placeholder="Novo item da checklist…" />
+                  <button id="c-add-check" class="btn secondary" type="button">Adicionar à Checklist</button>
+                </div>
+              </div>
+              <!-- Descrição (agora oculta, preenchida automaticamente) -->
+
+
+              <!-- Descrição (agora oculta, preenchida automaticamente) -->
+              <textarea id="c-desc" hidden></textarea>
+
+              <!-- Checklist (gerada do modelo) -->
+              <div>
+                <h4 style="margin:10px 0 6px">Checklist (gerada do modelo)</h4>
+                <div id="c-checklist"></div>
+              </div>
+
+              <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap">
+                <button id="c-ai" class="btn secondary" type="button">Gerar Checklist com IA</button>
+                <button id="c-create" class="btn" type="button">Gerar Card</button>
+                <span id="c-msg" class="msg"></span>
+              </div>
+
+
+
+
+
+              <!-- ROTINAS -->
+              <div id="rt-block" class="card hidden" style="margin:12px 0 14px">
+                <div class="card" style="margin:12px 0 14px">
+                  <h3 style="margin:0 0 8px">Rotinas</h3>
+                  <div class="row">
+                    <div class="field">
+                      <label for="c-rt-enabled">Ativar rotina</label>
+                      <select required id="c-rt-enabled">
+                        <option value="on">Ativada</option>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label for="c-rt-kind">Periodicidade</label>
+                      <select required id="c-rt-kind">
+                        <option value="DAILY">Diariamente</option>
+                        <option value="WEEKLY">Semanalmente</option>
+                        <option value="BIWEEKLY">Quinzenalmente</option>
+                        <option value="MONTHLY">Mensalmente</option>
+                        <option value="MON">Toda segunda</option>
+                        <option value="TUE">Toda terça</option>
+                        <option value="WED">Toda quarta</option>
+                        <option value="THU">Toda quinta</option>
+                        <option value="FRI">Toda sexta</option>
+                      </select>
+                    </div>
+                  </div>
+                  <p class="muted" style="margin:6px 0 0;font-size:12px">
+                    Os prazos das tarefas rotineiras, são definidos por cada responsável. Quando o prazo é vencido, a
+                    tarefa é gerada novamente e aplicada no início do fluxo automaticamente.
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <div id="c-checklist"></div>
+              </div>
+            </div>
     </section>
 
     <!-- KANBANS -->
@@ -1105,10 +1138,10 @@
 
       <div class="card">
         <div class="tabs" id="kb-tabs">
-          <div class="tab active" data-b="PLANEJAMENTO">Planejamento</div>
-          <div class="tab" data-b="ROTINA">Rotina</div>
+          <div class="tab active" data-b="PROJETOS">Projetos</div>
+          <div class="tab" data-b="ROTINAS">Rotinas</div>
           <div class="tab" data-b="EVENTOS">Eventos</div>
-          <div class="tab" data-b="COMERCIAL">Comercial</div>
+          <div class="tab" data-b="VENDAS">Vendas</div>
           <input id="k-q" type="search" placeholder="Buscar por título…" />
           <div style="display:flex;gap:8px;align-items:center">
             <select id="k-resp" title="Responsável"></select>
@@ -1135,10 +1168,10 @@
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
           <select id="m-board" title="Board">
             <option value="ALL" selected>Todos os boards</option>
-            <option value="PLANEJAMENTO">Planejamento</option>
-            <option value="ROTINA">Rotina</option>
+            <option value="PROJETOS">Projetos</option>
+            <option value="ROTINAS">Rotinas</option>
             <option value="EVENTOS">Eventos</option>
-            <option value="COMERCIAL">Comercial</option>
+            <option value="VENDAS">Vendas</option>
           </select>
 
           <select id="m-period" title="Período">
@@ -1179,7 +1212,7 @@
     <!-- REPORTAR BUG -->
     <section id="view-report" class="hidden">
       <div class="card" style="max-width:780px;margin:0 auto">
-        <h1 style="margin:0 0 6px;font-size:24px">Reportar um problema</h1>
+        <h1 style="margin:0 0 6px;font-size:24px">Reportar um Problema</h1>
         <p class="muted" style="margin:0 0 16px">Explique com suas palavras. Leva menos de 1 minuto. 🙂</p>
         <div id="msg-ok" class="msg ok">✅ Obrigado! Seu relato foi enviado ao time.</div>
         <div id="msg-err" class="msg err">⚠️ Não foi possível enviar agora. Tente novamente.</div>
@@ -1256,10 +1289,10 @@
 
   <footer>ACIA Nexus — 2025</footer>
 
-  <!-- MODAL: Novo comunicado do Mural (apenas admin) -->
+  <!-- MODAL: Novo Comunicado do Mural (apenas admin) -->
   <div id="muralModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="mu-title-h">
     <div class="modal-head">
-      <strong id="mu-title-h">Novo comunicado</strong>
+      <strong id="mu-title-h">Novo Comunicado</strong>
       <button id="mu-close" class="btn secondary" type="button">Fechar</button>
     </div>
 
@@ -1272,7 +1305,7 @@
         <div class="field">
           <label for="mu-cat">Categoria</label>
           <select id="mu-cat">
-            <option>Comercial</option>
+            <option>Vendas</option>
             <option>Eventos</option>
             <option>RH</option>
             <option>Operações</option>
@@ -1354,19 +1387,20 @@
         <label for="m-members">Responsável(eis) Envolvido(s)</label>
         <select id="m-members" multiple size="6"></select>
       </div>
-        <!-- Tarefa linkada (subtarefa) — EDITAR -->
-        <div class="field">
-          <label for="m-parent">Tarefa linkada com</label>
-          <select id="m-parent">
-            <option value="">—Nenhuma—</option>
-          </select>
-          <p class="muted" style="margin:6px 0 0;font-size:12px">Use para vincular esta tarefa como subtarefa de uma tarefa‑mãe.</p>
-        </div>
+      <!-- Tarefa linkada (subtarefa) — EDITAR -->
+      <div class="field">
+        <label for="m-parent">Tarefa linkada com</label>
+        <select id="m-parent">
+          <option value="">—Nenhuma—</option>
+        </select>
+        <p class="muted" style="margin:6px 0 0;font-size:12px">Use para vincular esta tarefa como subtarefa de uma
+          tarefa‑mãe.</p>
+      </div>
 
 
-      <!-- Rotina -->
+      <!-- Rotinas -->
       <div id="m-rt-block" class="card hidden" style="margin:6px 0">
-        <h4 style="margin:0 0 6px">Rotina</h4>
+        <h4 style="margin:0 0 6px">Rotinas</h4>
         <div class="row hidden">
           <div class="field hidden">
             <label for="m-rt-enabled">Ativar rotina</label>
@@ -1396,22 +1430,22 @@
         </p>
       </div>
 
-      <!-- Descrição (modelo rápido) — EDITAR -->
+      <!-- Descritivo da Tarefa — EDITAR -->
       <div class="row" id="m-desc-model" style="margin:6px 0">
-        <h4 style="margin:0 0 6px">Descrição (modelo rápido)</h4>
+        <h4 style="margin:0 0 6px">Descritivo da Tarefa</h4>
         <br>
         <div class="row">
           <div class="field">
-            <label for="m-md-objetivo">Objetivo</label>
+            <label for="m-md-objetivo">Objetivo da Tarefa</label>
             <textarea id="m-md-objetivo" placeholder="Restrições, links, contexto..."></textarea>
           </div>
           <div class="field">
-            <label for="m-md-acoes">Ações</label>
+            <label for="m-md-acoes">Descrever a Tarefa</label>
             <textarea id="m-md-acoes" placeholder="Restrições, links, contexto..."></textarea>
           </div>
         </div>
         <div class="field">
-          <label for="m-md-info">Informações adicionais</label>
+          <label for="m-md-info">Informações Adicionais</label>
           <textarea id="m-md-info" placeholder="Restrições, links, contexto..."></textarea>
         </div>
         <p class="muted" style="margin:6px 0 0;font-size:12px">
@@ -1449,7 +1483,6 @@
     </div>
   </div>
 
-
   <!-- MODAL DE CHAT (por card) -->
   <div id="chatModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="chat-title">
     <div class="modal-head">
@@ -1464,7 +1497,6 @@
       <button id="chat-send" class="btn" type="button">Enviar</button>
     </div>
   </div>
-
 
   <script type="module">
     /* ===========================
@@ -1494,7 +1526,6 @@
       }
       return (gut || 0) + bonus;
     }
-
 
     // === CHAT (por card) ===
     const Chat = {
@@ -1544,7 +1575,6 @@
       }
     };
 
-
     const Members = {
       async add({ uid, displayName, email, role = 'editor' }) {
         const createdAt = new Date().toISOString();
@@ -1583,12 +1613,11 @@
 
     const ALL_RESP = ["João Vitor Sgobin", "ssgobin"];
     const FLOWS = {
-      PLANEJAMENTO: ["PENDENTE", "EXECUÇÃO", "APROVAR", "CORRIGIR", "FINALIZAR", "CONCLUÍDO"],
-      ROTINA: ["PENDENTE", "EXECUÇÃO", "APROVAR", "CORRIGIR", "FINALIZAR", "CONCLUÍDO"],
-      EVENTOS: ["PENDENTE", "PLANEJAMENTO", "CRIAÇÃO", "DIVULGAÇÃO", "ORGANIZAÇÃO", "EXECUÇÃO", "PÓS-EVENTO", "CONCLUÍDO"],
-      COMERCIAL: ["PROSPECÇÃO", "PENDENTE", "NEGOCIAÇÃO", "PROPOSTA", "FECHADO", "CONCLUÍDO"]
+      PROJETOS: ["PENDENTE", "EXECUÇÃO", "APROVAR", "CORRIGIR", "FINALIZAR", "CONCLUÍDO"],
+      ROTINAS: ["PENDENTE", "EXECUÇÃO", "APROVAR", "CORRIGIR", "FINALIZAR", "CONCLUÍDO"],
+      EVENTOS: ["PENDENTE", "PROJETOS", "CRIAÇÃO", "DIVULGAÇÃO", "ORGANIZAÇÃO", "EXECUÇÃO", "PÓS-EVENTO", "CONCLUÍDO"],
+      VENDAS: ["PROSPECÇÃO", "PENDENTE", "NEGOCIAÇÃO", "PROPOSTA", "FECHADO", "CONCLUÍDO"]
     };
-
 
     const DEFAULT_CARD_DESC = `TAREFA QUE DEVE SER FEITA
 Descrever todas as ações que devem ser aplicada para a execução e entrega da tarefa, com excelência.
@@ -1602,11 +1631,11 @@ Listar todas as informações pertinentes que contribuam para a ação mais efet
 
     /* ========== IA (Groq) ========== */
     // Cole sua chave do Groq. Se vazio, usa fallback heurístico local.
-    const GROQ_API_KEY = "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"; // <<< SUA GROQ KEY AQUI
+    const GROQ_API_KEY = "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"; // <<< SUA GROQ KEY AQUI
     // Modelo Groq (sugestões: "llama3-70b-8192", "mixtral-8x7b-32768")
     const GROQ_MODEL = "llama-3.3-70b-versatile";
     // Se encontrar CORS no navegador, publique um proxy simples e coloque a URL aqui:
-    const GROQ_PROXY_URL = ""; // ex.: "https://seu-worker.exemplo.workers.dev"
+    const GROQ_PROXY_URL = "https://api.groq.com/openai/v1/chat/completions";
 
     // Firebase (opcional). Sem as credenciais, roda em modo Local (localStorage).
     const firebaseConfig = {
@@ -1808,8 +1837,8 @@ Listar todas as informações pertinentes que contribuam para a ação mais efet
         const base = {
           title: card.title || '(sem título)',
           desc: card.desc || '',
-          board: card.board || 'PLANEJAMENTO',
-          status: (card.status || FLOWS[card.board || 'PLANEJAMENTO'][0]),
+          board: card.board || 'PROJETOS',
+          status: (card.status || FLOWS[card.board || 'PROJETOS'][0]),
           resp: card.resp,
           respUid: card.respUid || null,                 // NOVO
           due: card.due || null,
@@ -1863,10 +1892,10 @@ Listar todas as informações pertinentes que contribuam para a ação mais efet
       },
       seed() {
         const sample = [
-          { title: 'Brief campanha X', board: 'PLANEJAMENTO', status: 'PENDENTE', resp: 'BRUNA', due: new Date(Date.now() + 864e5).toISOString() },
-          { title: 'Rotina: fechar caixa', board: 'ROTINA', status: 'EXECUÇÃO', resp: 'DANI' },
-          { title: 'Evento: checklist palco', board: 'EVENTOS', status: 'PLANEJAMENTO', resp: 'JOÃO VITOR' },
-          { title: 'Aprovar peças', board: 'PLANEJAMENTO', status: 'APROVAR', resp: 'VIVIAN' },
+          { title: 'Brief campanha X', board: 'PROJETOS', status: 'PENDENTE', resp: 'BRUNA', due: new Date(Date.now() + 864e5).toISOString() },
+          { title: 'Rotinas: fechar caixa', board: 'ROTINAS', status: 'EXECUÇÃO', resp: 'DANI' },
+          { title: 'Evento: checklist palco', board: 'EVENTOS', status: 'PROJETOS', resp: 'JOÃO VITOR' },
+          { title: 'Aprovar peças', board: 'PROJETOS', status: 'APROVAR', resp: 'VIVIAN' },
           { title: 'Divulgação imprensa', board: 'EVENTOS', status: 'DIVULGAÇÃO', resp: 'TATI' }
         ];
         sample.forEach(c => LocalDB.upsert({ id: String(Date.now() + Math.random()), createdAt: new Date().toISOString(), desc: '', ...c }));
@@ -2044,43 +2073,91 @@ Listar todas as informações pertinentes que contribuam para a ação mais efet
       const fallback = generateChecklistHeuristic({ title, desc, board });
       if (!GROQ_API_KEY) return fallback;
 
+      // 🔹 Checklist padrão por fluxo
+      let checklistBase = [];
+
+      // PENDENTE > EXECUÇÃO
+      if (board === "PENDENTE") {
+        checklistBase.push(
+          "Li e compreendi o que deve ser entregue",
+          "Tirei todas as dúvidas sobre a demanda",
+          "Tenho todas as informações para iniciar a execução"
+        );
+      }
+
+      // EXECUÇÃO > APROVAR
+      if (board === "EXECUCAO") {
+        checklistBase.push(
+          "Fiz a conferência de tudo o que devo entregar",
+          "Cumpri os processos e padrões estabelecidos",
+          "O que estou entregando está compatível com o acordado"
+        );
+      }
+
       try {
-        const prompt = `Gere uma checklist objetiva (5 a 10 itens) em português para a tarefa abaixo.
-Responda como lista de itens simples (sem numeração), cada item curto (verbo no infinitivo).
+        const prompt = `Gere uma checklist complementar e objetiva (máximo 15 itens) em português brasileiro para a tarefa abaixo.
+Evite repetir os seguintes itens já incluídos:
+${checklistBase.join('\n')}
 
 Contexto:
 - Board: ${board}
 - Título: ${title}
 - Descrição: ${desc || '(sem descrição)'}
-`;
+Responda apenas com os itens da checklist, um por linha.`;
+
         const body = JSON.stringify({
           model: GROQ_MODEL,
           messages: [
-            { role: "system", content: "Você é um assistente de PM que cria checklists claras e práticas." },
+            { role: "system", content: "Você é um assistente de gestão de tarefas que cria checklists práticas e claras." },
             { role: "user", content: prompt }
           ],
-          temperature: 0.2
+          temperature: 0.3
         });
 
-        // Endpoint OpenAI-compatible do Groq
-        const url = "https://api.groq.com/openai/v1/chat/completions";
-        const doFetch = (endpoint) => fetch(endpoint, {
+        const url = GROQ_PROXY_URL || "https://api.groq.com/openai/v1/chat/completions";
+        const resp = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_API_KEY}` },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${GROQ_API_KEY}`
+          },
           body
         });
 
-        const resp = await (GROQ_PROXY_URL ? doFetch(GROQ_PROXY_URL) : doFetch(url));
         if (!resp.ok) throw new Error('Groq HTTP ' + resp.status);
         const data = await resp.json();
         const text = (data?.choices?.[0]?.message?.content || "").trim();
-        const items = text.split(/\n+/).map(s => s.replace(/^[-*\d\.\)\s]+/, '').trim()).filter(Boolean);
-        return items.length ? items : fallback;
+        const aiItems = text
+          .split(/\n+/)
+          .map(s => s.replace(/^[-*\d\.\)\s]+/, '').trim())
+          .filter(Boolean);
+
+        // 🔹 Evita erro "aiItems is not iterable"
+        const safeAI = Array.isArray(aiItems) ? aiItems : [];
+        const safeFallback = Array.isArray(fallback) ? fallback : [];
+
+        // 🔹 Junta padrões + IA
+        const fullChecklist = [...checklistBase, ...safeAI, ...safeFallback];
+        return fullChecklist;
       } catch (e) {
         console.warn('Groq falhou, usando fallback:', e.message);
-        return fallback;
+        const safeFallback = Array.isArray(fallback) ? fallback : [];
+        return [...checklistBase, ...safeFallback];
       }
     }
+
+
+    // renderização no DOM
+    function renderChecklist(arr = []) {
+      const el = $('#c-checklist');
+      if (!el) return;
+      el.innerHTML = arr.map((txt, i) => `
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+      <input type="checkbox" id="chk-${i}">
+      <label for="chk-${i}">${txt}</label>
+    </div>`).join('');
+    }
+
 
     function generateChecklistHeuristic({ title, desc, board }) {
       const t = (title || '').toLowerCase() + ' ' + (desc || '').toLowerCase();
@@ -2093,10 +2170,10 @@ Contexto:
         items.push('Orçar fornecedores e solicitar propostas');
         items.push('Planejar comunicação/divulgação');
         items.push('Criar checklist de montagem e operação');
-      } else if (board === 'ROTINA') {
+      } else if (board === 'ROTINAS') {
         items.push('Documentar passo a passo padrão (SOP)');
         items.push('Agendar recorrência e lembretes');
-      } else { // PLANEJAMENTO
+      } else { // PROJETOS
         items.push('Quebrar tarefa em sub-atividades');
         items.push('Validar com partes interessadas');
       }
@@ -2156,10 +2233,17 @@ Contexto:
       const cMembers = $('#c-members');
       const cParent = $('#c-parent');
 
-      // Inputs do "Descrição (modelo rápido)"
+      // Inputs do "Descritivo da Tarefa"
       const mdObj = $('#md-objetivo');
       const mdAco = $('#md-acoes');
       const mdInf = $('#md-info');
+      try {
+        const dt = new Date(Date.now() + 3600_000);
+        const localISO = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000)
+          .toISOString().slice(0, 16);
+        cDue.value = localISO;
+      } catch { }
+
 
       // GUT
       const cG = $('#c-g'), cU = $('#c-u'), cT = $('#c-t'), cGUT = $('#c-gut');
@@ -2184,7 +2268,7 @@ Contexto:
 
       // ===== Usuários para Responsável/Membros =====
       let unsubUsersForCreate = null;
-        let unsubParentsForCreate = null;
+      let unsubParentsForCreate = null;
       async function bindUsersToCreate() {
         try { unsubUsersForCreate && unsubUsersForCreate(); } catch { }
         unsubUsersForCreate = null;
@@ -2236,32 +2320,52 @@ Contexto:
       document.addEventListener('auth:changed', bindUsersToCreate);
       bindUsersToCreate();
 
-      
-        async function bindParentsToCreate() {
-          try { unsubParentsForCreate && unsubParentsForCreate(); } catch { }
-          unsubParentsForCreate = null;
-          const renderOpts = (arr) => {
-            if (!cParent) return;
-            const opts = ['<option value="">—Nenhuma—</option>'];
-            (arr || []).forEach(c => {
-              if (!c || !c.id) return;
-              const title = String(c.title || '(sem título)').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-              const board = c.board || '—';
-              opts.push(`<option value="${c.id}" data-label="${title}">[${board}] ${title}</option>`);
-            });
-            cParent.innerHTML = opts.join('');
-          };
-          try {
-            const u = Cards.listen(renderOpts);
-            unsubParentsForCreate = (typeof u === 'function') ? u : (u?.then?.(fn => (unsubParentsForCreate = fn)));
-          } catch { /* fallback local (já coberto pelo listen) */ }
-        }
-        document.addEventListener('auth:changed', bindParentsToCreate);
-        bindParentsToCreate();
-// Rotina: mostra bloco só no board ROTINA
+
+      async function bindParentsToCreate() {
+        try { unsubParentsForCreate && unsubParentsForCreate(); } catch { }
+        unsubParentsForCreate = null;
+        const renderOpts = (arr) => {
+          if (!cParent) return;
+          const opts = ['<option value="">—Nenhuma—</option>'];
+          (arr || []).forEach(c => {
+            if (!c || !c.id) return;
+            const title = String(c.title || '(sem título)').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const board = c.board || '—';
+            opts.push(`<option value="${c.id}" data-label="${title}">[${board}] ${title}</option>`);
+          });
+          cParent.innerHTML = opts.join('');
+        };
+        try {
+          const u = Cards.listen(renderOpts);
+          unsubParentsForCreate = (typeof u === 'function') ? u : (u?.then?.(fn => (unsubParentsForCreate = fn)));
+        } catch { /* fallback local (já coberto pelo listen) */ }
+      }
+      document.addEventListener('auth:changed', bindParentsToCreate);
+      bindParentsToCreate();
+      // Rotinas: mostra bloco só no board ROTINAS
       const rtBlock = $('#rt-block');
+      // Posiciona o bloco de Rotinas logo após o GUT
+      const gutBlock = $('#c-gut-block');
+      try { if (gutBlock && rtBlock) gutBlock.insertAdjacentElement('afterend', rtBlock); } catch { }
+
+      // Checklist manual (create view)
+      const cChkNew = $('#c-new-check');
+      const cChkAdd = $('#c-add-check');
+      if (cChkAdd) {
+        cChkAdd.addEventListener('click', () => {
+          const t = (cChkNew?.value || '').trim();
+          if (!t) return;
+          const buf = (setDescAndPreview._buffer || []).slice();
+          buf.push({ text: t, done: false, createdAt: new Date().toISOString() });
+          setDescAndPreview(buf);
+          cChkNew.value = '';
+        });
+      }
+
+
+
       function toggleRtBlock() {
-        rtBlock.classList.toggle('hidden', cBoard.value !== 'ROTINA');
+        rtBlock.classList.toggle('hidden', cBoard.value !== 'ROTINAS');
       }
       toggleRtBlock();
       cBoard.addEventListener('change', toggleRtBlock);
@@ -2372,8 +2476,8 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
 
         const dueIso = cDue.value ? new Date(cDue.value).toISOString() : null;
 
-        // rotina só vale quando o board for ROTINA
-        const isRotinaBoard = (cBoard.value === 'ROTINA');
+        // rotina só vale quando o board for ROTINAS
+        const isRotinaBoard = (cBoard.value === 'ROTINAS');
         const rtEnabledSel = $('#c-rt-enabled');
         const rtKindSel = $('#c-rt-kind');
         const isRotinaOn = isRotinaBoard && rtEnabledSel && (rtEnabledSel.value === 'on');
@@ -2565,7 +2669,7 @@ INFORMAÇÕES ADICIONAIS
 ${inf || 'Listar todas as informações pertinentes que contribuam para a ação mais efetiva e assertiva em sua execução.'}`;
       }
 
-      // extrai Objetivo / Ações / Info da descrição já salva
+      // extrai Objetivo da Tarefa / Descrever a Tarefa / Info da descrição já salva
       function parseDescSections(descText) {
         const text = (descText || '').replace(/\r/g, '').trim();
         const H1 = /TAREFA QUE DEVE SER FEITA/i;
@@ -2596,7 +2700,7 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
 
         if (i3 >= 0) sections.info = sliceAfterHeader(i3, -1);
 
-        // normaliza quebras de linha em lista separada por vírgulas para o campo "Ações"
+        // normaliza quebras de linha em lista separada por vírgulas para o campo "Descrever a Tarefa"
         if (sections.acoes) {
           sections.acoes = sections.acoes.split(/\n+/).map(s => s.trim()).filter(Boolean).join(', ');
         }
@@ -2754,7 +2858,7 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
       bindUsersToEdit();
 
       // ===== Estado/Kanban =====
-      let currentBoard = 'PLANEJAMENTO';
+      let currentBoard = 'PROJETOS';
       let cache = new Map();
       let unsubCards = null, unsubA = null, unsubCL = null;
       let lastAll = [];
@@ -2766,7 +2870,7 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
         startLive();
       });
 
-      // ——— ROTINA: volta sempre para PENDENTE e calcula próximo prazo ———
+      // ——— ROTINAS: volta sempre para PENDENTE e calcula próximo prazo ———
       const routineSeen = new Set();
       async function routineTick() {
         const all = lastAll || [];
@@ -2826,7 +2930,7 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
         }
       }
 
-      function boardFlow(b) { return FLOWS[b] || FLOWS.PLANEJAMENTO; }
+      function boardFlow(b) { return FLOWS[b] || FLOWS.PROJETOS; }
 
       async function isChecklistComplete(cardId) {
         const list = await fetchChecklist(cardId);
@@ -2861,7 +2965,25 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
                   return;
                 }
               }
-              await Cards.update(cardId, { status: newStatus });
+              const patch = { status: newStatus };
+              try {
+                if (newStatus === 'EXECUÇÃO' && !card.startAt) patch.startAt = new Date().toISOString();
+                if (newStatus === 'CONCLUÍDO' && !card.finishAt) patch.finishAt = new Date().toISOString();
+                if (card.status === 'CONCLUÍDO' && newStatus !== 'CONCLUÍDO') patch.reopened = (card.reopened || 0) + 1;
+              } catch { }
+              await Cards.update(cardId, patch);
+              // 🔹 Fluxo especial: APROVAR → CORRIGIR / FINALIZAR
+              if (newStatus === "APROVAR") {
+                const escolha = confirm("Tarefa aprovada?\n\nOK = Sim (enviar para CORRIGIR)\nCancelar = Não (enviar para FINALIZAR)");
+                const destino = escolha ? "CORRIGIR" : "FINALIZAR";
+
+                try {
+                  await Cards.update(cardId, { status: destino });
+                  alert(`Tarefa movida automaticamente para: ${destino}`);
+                } catch (err) {
+                  console.error("Erro ao mover tarefa:", err);
+                }
+              }
             }
           });
         });
@@ -3057,21 +3179,21 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
 
         mStatus.innerHTML = boardFlow(card.board).map(s => `<option ${s === card.status ? 'selected' : ''}>${s}</option>`).join('');
 
-        
+
         // ---- Tarefa linkada (parent) ----
         if (typeof mParent !== 'undefined' && mParent) {
           const opts = ['<option value="">—Nenhuma—</option>'];
           (lastAll || []).forEach(c => {
             if (!c || !c.id) return;
             if (String(c.id) === String(card.id)) return; // evita auto-vínculo
-            const title = String(c.title || '(sem título)').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const title = String(c.title || '(sem título)').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const board = c.board || '—';
             opts.push(`<option value="${c.id}" data-label="${title}">[${board}] ${title}</option>`);
           });
           mParent.innerHTML = opts.join('');
           mParent.value = card.parentId || '';
         }
-/* ========= RESPONSÁVEL & MEMBROS (robusto ao async) ========= */
+        /* ========= RESPONSÁVEL & MEMBROS (robusto ao async) ========= */
         // o que queremos selecionar (aceita UID e/ou label legado)
         const desiredRespUid = (cloudOk && card.respUid) ? String(card.respUid) : null;
         const desiredRespLabel = (card.resp || '').trim() || null;
@@ -3239,6 +3361,15 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
         const gut = computeGut(mG.value, mU.value, mT.value);
         const gutGrade = gutClass(gut);
         const priority = computePriority(dueIso, gut);
+        const extra = {};
+        try {
+          if (card && nextStatus !== card.status) {
+            if (nextStatus === 'EXECUÇÃO' && !card.startAt) extra.startAt = new Date().toISOString();
+            if (nextStatus === 'CONCLUÍDO' && !card.finishAt) extra.finishAt = new Date().toISOString();
+            if (card.status === 'CONCLUÍDO' && nextStatus !== 'CONCLUÍDO') extra.reopened = (card.reopened || 0) + 1;
+          }
+        } catch { }
+
 
         await Cards.update(modalId, {
           title: (mTitle.value || '').trim() || '(sem título)',
@@ -4054,11 +4185,98 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
       await initFirebase();
       renderRoute();
     })();
+    // === IA: Gerar Checklist com Groq ===
+    $('#c-ai')?.addEventListener('click', async () => {
+      const title = $('#c-title')?.value?.trim();
+      const desc = $('#md-acoes')?.value?.trim() + "\n" + $('#md-objetivo')?.value?.trim();
+      const info = $('#md-info')?.value?.trim();
+      const prompt = `
+  Gere uma checklist prática e detalhada com base na tarefa:
+  Título: ${title || '(sem título)'}
+  Descrição: ${desc || '(sem descrição)'}
+  Informações adicionais: ${info || '(nenhuma)'}
+  Liste apenas os itens da checklist, sem numeração nem explicações.
+  `;
+
+      const checklistEl = $('#c-checklist');
+      checklistEl.innerHTML = '<p class="muted">⏳ Gerando checklist...</p>';
+
+      try {
+        const res = await fetch((GROQ_PROXY_URL || "https://api.groq.com/openai/v1/chat/completions"), {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${GROQ_API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: GROQ_MODEL,
+            messages: [{ role: "user", content: prompt }]
+          })
+        });
+
+        const data = await res.json();
+        const text = data?.choices?.[0]?.message?.content || "Erro ao gerar checklist.";
+        const lines = text.split(/\n+/).filter(l => l.trim());
+
+        checklistEl.innerHTML = lines.map(l => `
+      <label><input type="checkbox" /> ${l.replace(/^[•\-–\d\.\s]+/, '')}</label>
+    `).join('');
+      } catch (err) {
+        checklistEl.innerHTML = `<p class="msg err">⚠️ Falha ao gerar checklist: ${err.message}</p>`;
+      }
+    });
+
+    // === Upload de anexos via Uploadcare (corrigido com domínio dinâmico) ===
+    const UPLOADCARE_PUBLIC_KEY = "bec8b0653d0455ca2d7d";
+    const UPLOADCARE_BASE_URL = "https://4n9t773dy8.ucarecd.net"; // copie do seu painel!
+
+    $('#m-send-attach')?.addEventListener('click', async () => {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '*/*';
+      fileInput.onchange = async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const form = new FormData();
+        form.append("UPLOADCARE_PUB_KEY", UPLOADCARE_PUBLIC_KEY);
+        form.append("UPLOADCARE_STORE", "1");
+        form.append("file", file);
+
+        try {
+          const res = await fetch("https://upload.uploadcare.com/base/", { method: "POST", body: form });
+          const data = await res.json();
+
+          if (data.file) {
+            const fileUrl = `${UPLOADCARE_BASE_URL}/${data.file}/${encodeURIComponent(file.name)}`;
+            alert("Arquivo anexado com sucesso!");
+            $('#m-attachments').innerHTML += `
+          <div class="comment">
+            <a href="${fileUrl}" target="_blank">${file.name}</a>
+          </div>
+        `;
+          } else {
+            alert("❌ Falha ao enviar o arquivo (sem UUID retornado).");
+          }
+        } catch (err) {
+          alert("⚠️ Erro no upload: " + err.message);
+        }
+        if (cloudOk && window.currentEditingCardId) {
+          const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+          await addDoc(collection(db, 'cards', window.currentEditingCardId, 'attachments'), {
+            name: file.name,
+            url: fileUrl,
+            createdAt: new Date().toISOString()
+          });
+        }
+      };
+      fileInput.click();
+
+
+    });
+
+
   </script>
 </body>
 
 </html>
-
-
-
-
