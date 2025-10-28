@@ -1314,7 +1314,18 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
     });
 })();
 
-
+(function tuneKanbanColHeight() {
+  function setColMax() {
+    const header = document.querySelector('header');
+    const headerH = header ? header.getBoundingClientRect().height : 0;
+    // 100vh menos header e um respiro
+    const target = Math.max(320, Math.floor(window.innerHeight - headerH - 110));
+    document.documentElement.style.setProperty('--kanban-col-max-h', `${target}px`);
+  }
+  setColMax();
+  window.addEventListener('resize', setColMax);
+  document.addEventListener('auth:changed', setColMax); // se tua UI mexe com layout após login
+})();
 
 /* ===========================
    Kanbans (3 abas), KPIs, Modal, Drag

@@ -16,10 +16,16 @@
     --focus-ring: 0 0 0 4px rgba(59, 130, 246, .25);
     --ring: #334155;
     --shadow-lg: 0 12px 30px rgba(2, 6, 23, .35);
+    --kanban-col-max-h: 68vh;
 }
 
-:root { color-scheme: dark; }
-html.light { color-scheme: light; }
+:root {
+    color-scheme: dark;
+}
+
+html.light {
+    color-scheme: light;
+}
 
 
 * {
@@ -423,6 +429,7 @@ footer {
 }
 
 .columns {
+    align-items: start;
     display: grid;
     grid-template-columns: repeat(6, minmax(270px, 1fr));
     gap: 14px;
@@ -453,16 +460,19 @@ footer {
     border-radius: 16px;
     padding: 10px;
     display: flex;
-    flex-direction: column
+    flex-direction: column;
+    min-height: 200px;
 }
 
 .col h4 {
-    margin: 6px 8px 8px;
-    font-size: 14px;
-    letter-spacing: .3px;
-    display: flex;
-    align-items: center;
-    gap: 8px
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: rgba(15, 23, 42, .85);
+    /* mesmo fundo do card */
+    backdrop-filter: blur(4px);
+    margin: 0 0 8px 0;
+    /* espaço controlado abaixo do título */
 }
 
 .pill {
@@ -478,17 +488,39 @@ footer {
 }
 
 .col-body {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-height: 88%;
-    padding: 6px;
-    border-radius: 12px
+
+  flex-direction: column;
+  gap: 10px;
+
+  /* garante área clicável/soltável mesmo vazia */
+  min-height: 180px;
+
+  /* limite com rolagem */
+  max-height: var(--kanban-col-max-h, 68vh);
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding: 6px 6px 10px;
+  border-radius: 12px;
+}
+
+/* (opcional) scrollbar discreto */
+.col-body::-webkit-scrollbar { width: 8px; }
+.col-body::-webkit-scrollbar-thumb {
+  background: rgba(96,165,250,.25);
+  border-radius: 8px;
+}
+.col-body:hover::-webkit-scrollbar-thumb { background: rgba(96,165,250,.45); }
+
+@media (max-width: 900px) {
+    :root {
+        --kanban-col-max-h: 58vh;
+    }
 }
 
 .col-body.drag-over {
-    outline: 2px dashed rgba(96, 165, 250, .4);
-    outline-offset: -4px
+  outline: 2px dashed rgba(96, 165, 250, .4);
+  outline-offset: -4px;
 }
 
 .card-item {
@@ -496,7 +528,17 @@ footer {
     border: 1px solid rgba(96, 165, 250, .18);
     border-radius: 14px;
     padding: 10px 12px;
-    cursor: grab
+    cursor: grab;
+    margin-bottom: 5px;
+}
+
+.col-body:empty::after {
+  content: "Solte os cards aqui";
+  display: block;
+  text-align: center;
+  padding: 18px 8px;
+  font-size: 12px;
+  opacity: .45;
 }
 
 /* evita qualquer vazamento do conteúdo do card */
@@ -940,179 +982,220 @@ input[type="checkbox"]:focus {
 
 /* ===== THEME: LIGHT (claro/azulado) ===== */
 html.light {
-  --bg: #f3f7ff;            /* fundo da página */
-  --surface: #e9f1ff;       /* superfícies secundárias */
-  --card: #ffffff;          /* cartões/caixas */
-  --text: #0b1220;          /* texto principal */
-  --text-muted: #3b4966;    /* texto secundário */
-  --border: #cfe0ff;        /* bordas leves */
-  --primary: #1d72c6;       /* azul principal */
-  --primary-600: #165da1;
-  --primary-700: #124f88;
-  --accent: #3a7bd5;
-  --ring: #c9daf8;
-  --shadow-lg: 0 12px 30px rgba(2, 6, 23, .08);
+    --bg: #f3f7ff;
+    /* fundo da página */
+    --surface: #e9f1ff;
+    /* superfícies secundárias */
+    --card: #ffffff;
+    /* cartões/caixas */
+    --text: #0b1220;
+    /* texto principal */
+    --text-muted: #3b4966;
+    /* texto secundário */
+    --border: #cfe0ff;
+    /* bordas leves */
+    --primary: #1d72c6;
+    /* azul principal */
+    --primary-600: #165da1;
+    --primary-700: #124f88;
+    --accent: #3a7bd5;
+    --ring: #c9daf8;
+    --shadow-lg: 0 12px 30px rgba(2, 6, 23, .08);
 }
 
 /* Transição suave para temas */
-html, body, header, .card, .col, input, select, textarea, .pill, .badge, .btn, .nav a {
-  transition: background-color .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease;
+html,
+body,
+header,
+.card,
+.col,
+input,
+select,
+textarea,
+.pill,
+.badge,
+.btn,
+.nav a {
+    transition: background-color .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease;
 }
 
 /* Fundo geral claro + “aura” azul */
 html.light body {
-  background:
-    radial-gradient(1200px 600px at 20% -10%, rgba(61,132,248,.18), transparent 60%),
-    radial-gradient(800px 400px at 120% 10%, rgba(61,132,248,.12), transparent 70%),
-    var(--bg);
-  background-attachment: fixed, fixed, scroll;
-  color: var(--text);
+    background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(61, 132, 248, .18), transparent 60%),
+        radial-gradient(800px 400px at 120% 10%, rgba(61, 132, 248, .12), transparent 70%),
+        var(--bg);
+    background-attachment: fixed, fixed, scroll;
+    color: var(--text);
 }
 
 /* Header claro translúcido */
 html.light header {
-  backdrop-filter: blur(8px) saturate(1.2);
-  background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.66));
-  border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(8px) saturate(1.2);
+    background: linear-gradient(180deg, rgba(255, 255, 255, .82), rgba(255, 255, 255, .66));
+    border-bottom: 1px solid var(--border);
 }
 
 /* Navegação */
-html.light .nav a { color: var(--text); }
+html.light .nav a {
+    color: var(--text);
+}
+
 html.light .nav a:hover {
-  background: rgba(61,132,248,.12);
-  border-color: rgba(61,132,248,.28);
+    background: rgba(61, 132, 248, .12);
+    border-color: rgba(61, 132, 248, .28);
 }
 
 /* Botões */
 html.light .btn {
-  background: linear-gradient(180deg, var(--primary), var(--primary-600));
-  color: #fff;
-  border-color: rgba(61,132,248,.35);
+    background: linear-gradient(180deg, var(--primary), var(--primary-600));
+    color: #fff;
+    border-color: rgba(61, 132, 248, .35);
 }
+
 html.light .btn.secondary {
-  background: linear-gradient(180deg, #f7faff, #eef5ff);
-  color: var(--text);
-  border: 1px solid var(--border);
+    background: linear-gradient(180deg, #f7faff, #eef5ff);
+    color: var(--text);
+    border: 1px solid var(--border);
 }
 
 /* Cards/caixas */
 html.light .card {
-  background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.9));
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-lg);
+    background: linear-gradient(180deg, rgba(255, 255, 255, .95), rgba(255, 255, 255, .9));
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
 }
 
 /* Colunas (kanban) */
 html.light .col {
-  background: #ffffff;
-  border: 1px solid var(--border);
+    background: #ffffff;
+    border: 1px solid var(--border);
 }
 
 /* Itens do kanban */
 html.light .card-item {
-  background: linear-gradient(180deg, #ffffff, #f7fbff);
-  border: 1px solid var(--border);
+    background: linear-gradient(180deg, #ffffff, #f7fbff);
+    border: 1px solid var(--border);
 }
 
 /* Chips / badges */
 html.light .chip,
 html.light .badge,
 html.light .pill {
-  background: rgba(61,132,248,.10);
-  border: 1px solid rgba(61,132,248,.25);
-  color: #1d2b4f;
+    background: rgba(61, 132, 248, .10);
+    border: 1px solid rgba(61, 132, 248, .25);
+    color: #1d2b4f;
 }
 
 /* Inputs */
 html.light input,
 html.light select,
 html.light textarea {
-  background: #ffffff;
-  color: var(--text);
-  border: 1px solid var(--border);
+    background: #ffffff;
+    color: var(--text);
+    border: 1px solid var(--border);
 }
 
 /* Mensagens */
 html.light .msg.ok {
-  background: rgba(34,197,94,.12);
-  border-color: rgba(34,197,94,.35);
+    background: rgba(34, 197, 94, .12);
+    border-color: rgba(34, 197, 94, .35);
 }
+
 html.light .msg.err {
-  background: rgba(239,68,68,.12);
-  border-color: rgba(239,68,68,.35);
+    background: rgba(239, 68, 68, .12);
+    border-color: rgba(239, 68, 68, .35);
 }
 
 /* Rodapé */
-html.light footer { color: var(--text-muted); }
+html.light footer {
+    color: var(--text-muted);
+}
+
 /* ===== LIGHT OVERRIDES — Modal, Backdrop, Dropdown, Comentários, Checklist ===== */
 
 /* Backdrop mais claro/azulado */
 html.light .backdrop {
-  background: rgba(13, 40, 85, .25); /* era rgba(2,6,23,.6) */
-  backdrop-filter: blur(4px);
+    background: rgba(13, 40, 85, .25);
+    /* era rgba(2,6,23,.6) */
+    backdrop-filter: blur(4px);
 }
 
 /* Modal claro */
 html.light .modal {
-  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.94));
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-lg);
-  color: var(--text);
+    background: linear-gradient(180deg, rgba(255, 255, 255, .98), rgba(255, 255, 255, .94));
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+    color: var(--text);
 }
+
 html.light .modal-head,
 html.light .modal-foot {
-  background: linear-gradient(180deg, #ffffff, #f7faff);
-  border-color: var(--border);
+    background: linear-gradient(180deg, #ffffff, #f7faff);
+    border-color: var(--border);
 }
+
 html.light .modal-body {
-  background: #ffffff;
+    background: #ffffff;
 }
 
 /* Comentários dentro do modal */
 html.light .comment {
-  background: #f7fbff;                 /* era rgba(15,23,42,.5) */
-  border: 1px solid var(--border);
+    background: #f7fbff;
+    /* era rgba(15,23,42,.5) */
+    border: 1px solid var(--border);
 }
+
 html.light .comment .meta {
-  color: var(--text-muted);
+    color: var(--text-muted);
 }
 
 /* Itens de checklist do modal */
 html.light #m-checklist label {
-  background: #f9fbff;                 /* era rgba(15,23,42,.35) */
-  border: 1px solid var(--border);     /* era rgba(96,165,250,.12) */
+    background: #f9fbff;
+    /* era rgba(15,23,42,.35) */
+    border: 1px solid var(--border);
+    /* era rgba(96,165,250,.12) */
 }
 
 /* Dropdown (sino do mural) claro */
 html.light .dropdown {
-  background: #ffffff;                 /* era gradiente escuro */
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-lg);
+    background: #ffffff;
+    /* era gradiente escuro */
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
 }
+
 html.light .dropdown-head,
 html.light .dropdown-foot {
-  border-color: var(--border);
+    border-color: var(--border);
 }
+
 html.light .dropdown-list li {
-  border-bottom-color: rgba(0,0,0,.06);
+    border-bottom-color: rgba(0, 0, 0, .06);
 }
 
 /* Extras que também estavam escuros por padrão */
 html.light .auth-tab {
-  background: #f0f6ff;                 /* era rgba(15,23,42,.6) */
-  border: 1px solid var(--border);
-  color: var(--text);
-}
-html.light .auth-tab.active {
-  background: rgba(61,132,248,.14);
-  border-color: rgba(61,132,248,.35);
-}
-html.light .hero {
-  background: linear-gradient(180deg, #ffffff, #f7fbff);  /* era gradiente escuro */
-  border: 1px solid var(--border);
-}
-html.light .kpi-card {
-  background: #ffffff;                 /* era rgba(15,23,42,.6) */
-  border: 1px solid var(--border);
+    background: #f0f6ff;
+    /* era rgba(15,23,42,.6) */
+    border: 1px solid var(--border);
+    color: var(--text);
 }
 
+html.light .auth-tab.active {
+    background: rgba(61, 132, 248, .14);
+    border-color: rgba(61, 132, 248, .35);
+}
+
+html.light .hero {
+    background: linear-gradient(180deg, #ffffff, #f7fbff);
+    /* era gradiente escuro */
+    border: 1px solid var(--border);
+}
+
+html.light .kpi-card {
+    background: #ffffff;
+    /* era rgba(15,23,42,.6) */
+    border: 1px solid var(--border);
+}
