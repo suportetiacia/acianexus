@@ -902,27 +902,27 @@ async function isChecklistComplete(cardId) {
 })();
 // THEME (fonte única da verdade)
 (function () {
-  const root = document.documentElement;
-  const btn  = document.getElementById('themeToggle');
+    const root = document.documentElement;
+    const btn = document.getElementById('themeToggle');
 
-  // aplica estado inicial: confia no que o <head> já colocou na <html>
-  const initial = root.classList.contains('light') ? 'light' : (localStorage.getItem('theme') || 'dark');
-  const apply = (mode) => {
-    root.classList.toggle('light', mode === 'light');
-    try { localStorage.setItem('theme', mode); } catch {}
-    if (btn) btn.textContent = (mode === 'light') ? '🌙' : '☀️';
-  };
-  apply(initial);
+    // aplica estado inicial: confia no que o <head> já colocou na <html>
+    const initial = root.classList.contains('light') ? 'light' : (localStorage.getItem('theme') || 'dark');
+    const apply = (mode) => {
+        root.classList.toggle('light', mode === 'light');
+        try { localStorage.setItem('theme', mode); } catch { }
+        if (btn) btn.textContent = (mode === 'light') ? '🌙' : '☀️';
+    };
+    apply(initial);
 
-  // toggle no clique
-  btn?.addEventListener('click', () => {
-    apply(root.classList.contains('light') ? 'dark' : 'light');
-  });
+    // toggle no clique
+    btn?.addEventListener('click', () => {
+        apply(root.classList.contains('light') ? 'dark' : 'light');
+    });
 
-  // sincroniza entre abas (opcional)
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'theme' && e.newValue) apply(e.newValue);
-  });
+    // sincroniza entre abas (opcional)
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'theme' && e.newValue) apply(e.newValue);
+    });
 })();
 
 
@@ -1987,6 +1987,9 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
 
         mTitle.value = card.title || '';
         mDesc.value = card.desc || '';
+        // dentro de openModal(card)
+        window.currentEditingCardId = card.id;
+
 
         // pré-preenche os 3 campos do modelo a partir da descrição existente
         syncDescToModel();
@@ -2134,6 +2137,9 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
         if (unsubA) unsubA(); if (unsubCL) unsubCL();
         modal.classList.remove('show');
         if (!$('#chatModal').classList.contains('show')) back.classList.remove('show');
+        // dentro de closeModal()
+        window.currentEditingCardId = null;
+
     }
     btnClose.onclick = closeModal;
     back.onclick = closeModal;
@@ -2143,6 +2149,7 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
         const u = (mANew.value || '').trim(); if (!u) return;
         await Sub.addAttachment(modalId, u); mANew.value = '';
     };
+
     mChkAdd.onclick = async () => {
         if (!modalId) return;
         const t = (mChkNew.value || '').trim(); if (!t) return;
@@ -3084,54 +3091,80 @@ $('#c-ai')?.addEventListener('click', async () => {
     }
 });
 
-// === Upload de anexos via Uploadcare (corrigido com domínio dinâmico) ===
-const UPLOADCARE_PUBLIC_KEY = "bec8b0653d0455ca2d7d";
-const UPLOADCARE_BASE_URL = "https://4n9t773dy8.ucarecd.net"; // copie do seu painel!
+// === Upload de anexos via Uploadcare (REST, gratuito) ===
+const UPLOADCARE_PUBLIC_KEY = "bec8b0653d0455ca2d7d"; // sua public key
+// Dica: não precisa de domínio fixo; use sempre ucarecdn.com
+async function uploadWithUploadcare(file) {
+    const form = new FormData();
+    form.append("UPLOADCARE_PUB_KEY", UPLOADCARE_PUBLIC_KEY);
+    form.append("UPLOADCARE_STORE", "1");           // guarda no CDN
+    form.append("file", file);
 
-$('#m-send-attach')?.addEventListener('click', async () => {
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = '*/*';
-    fileInput.onchange = async () => {
-        const file = fileInput.files[0];
+    const res = await fetch("https://upload.uploadcare.com/base/", {
+        method: "POST",
+        body: form
+    });
+    const data = await res.json();
+    if (!data.file) throw new Error("Falha no upload (sem UUID).");
+    // URL canônica do CDN:
+    // Usa o seu subdomínio real
+    return `https://4n9t773dy8.ucarecd.net/${data.file}/${encodeURIComponent(file.name)}`;
+
+}
+
+// Clique do botão "Anexar" no modal
+document.querySelector('#m-send-attach')?.addEventListener('click', async () => {
+    const picker = document.createElement('input');
+    picker.type = 'file';
+    picker.accept = '*/*';
+    picker.onchange = async () => {
+        const file = picker.files?.[0];
         if (!file) return;
 
-        const form = new FormData();
-        form.append("UPLOADCARE_PUB_KEY", UPLOADCARE_PUBLIC_KEY);
-        form.append("UPLOADCARE_STORE", "1");
-        form.append("file", file);
-
         try {
-            const res = await fetch("https://upload.uploadcare.com/base/", { method: "POST", body: form });
-            const data = await res.json();
+            const url = await uploadWithUploadcare(file);
 
-            if (data.file) {
-                const fileUrl = `${UPLOADCARE_BASE_URL}/${data.file}/${encodeURIComponent(file.name)}`;
-                alert("Arquivo anexado com sucesso!");
-                $('#m-attachments').innerHTML += `
+            // Render imediato no modal
+            const list = document.querySelector('#m-attachments');
+            if (list) {
+                list.insertAdjacentHTML('beforeend', `
           <div class="comment">
-            <a href="${fileUrl}" target="_blank">${file.name}</a>
-          </div>
-        `;
-            } else {
-                alert("❌ Falha ao enviar o arquivo (sem UUID retornado).");
+            <a href="${url}" target="_blank">${file.name}</a>
+          </div>`);
             }
-        } catch (err) {
-            alert("⚠️ Erro no upload: " + err.message);
-        }
-        if (cloudOk && window.currentEditingCardId) {
-            const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-            await addDoc(collection(db, 'cards', window.currentEditingCardId, 'attachments'), {
-                name: file.name,
-                url: fileUrl,
-                createdAt: new Date().toISOString()
-            });
+
+            // Persistência no card (Firestore ou Local)
+            if (window.currentEditingCardId) {
+                if (cloudOk) {
+                    const { collection, addDoc } =
+                        await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+                    await addDoc(collection(db, 'cards', window.currentEditingCardId, 'attachments'), {
+                        name: file.name,
+                        url,
+                        createdAt: new Date().toISOString(),
+                        author: currentUser?.uid || 'anon',
+                        authorName: currentUser?.displayName || currentUser?.email || '—'
+                    });
+                } else {
+                    // Local fallback
+                    const all = LocalDB.load();
+                    const i = all.cards.findIndex(c => String(c.id) === String(window.currentEditingCardId));
+                    if (i >= 0) {
+                        all.cards[i].attachments = (all.cards[i].attachments || [])
+                            .concat({ name: file.name, url, createdAt: new Date().toISOString() });
+                        LocalDB.save(all);
+                    }
+                }
+            }
+
+            alert("Arquivo anexado com sucesso!");
+        } catch (e) {
+            alert("⚠️ Erro no upload: " + e.message);
         }
     };
-    fileInput.click();
-
-
+    picker.click();
 });
+
 
 (function () {
     const storageKey = 'acia-calendar-events-v1';
@@ -3179,7 +3212,7 @@ $('#m-send-attach')?.addEventListener('click', async () => {
             evs.slice(0, 5).forEach((ev, i) => {
                 const title = (ev.title || '(sem título)').replace(/</g, '&lt;');
                 const resp = (ev.resp || '').split(',').map(s => s.trim()).filter(Boolean).slice(0, 2).join(', ');
-                html += `<div class="cal-evt pill" data-date="${iso}" data-idx="${i}" style="cursor:pointer;padding:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px;max-height:100px;" title="${title}\n${resp}">${title}${resp ? (' · ' + resp) : ''}</div>`;
+                html += `<div class="cal-evt pill" data-date="${iso}" data-idx="${i}" style="cursor:pointer;padding:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px;max-height:175px;" title="${title}\n${resp}">${title}${resp ? (' · ' + resp) : ''}</div>`;
             });
             html += `</div></div>`;
         });
@@ -3415,5 +3448,4 @@ $('#cal-close')?.addEventListener('click', () => { $('#calendarModal').classList
 })();
 
 document.addEventListener('auth:changed', loadAndRenderCalendar);
-
 
