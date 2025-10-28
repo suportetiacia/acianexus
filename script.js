@@ -3179,7 +3179,7 @@ $('#m-send-attach')?.addEventListener('click', async () => {
             evs.slice(0, 5).forEach((ev, i) => {
                 const title = (ev.title || '(sem título)').replace(/</g, '&lt;');
                 const resp = (ev.resp || '').split(',').map(s => s.trim()).filter(Boolean).slice(0, 2).join(', ');
-                html += `<div class="cal-evt pill" data-date="${iso}" data-idx="${i}" style="cursor:pointer;padding:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${title}\n${resp}">${title}${resp ? (' · ' + resp) : ''}</div>`;
+                html += `<div class="cal-evt pill" data-date="${iso}" data-idx="${i}" style="cursor:pointer;padding:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px;max-height:100px;" title="${title}\n${resp}">${title}${resp ? (' · ' + resp) : ''}</div>`;
             });
             html += `</div></div>`;
         });
@@ -3415,4 +3415,5 @@ $('#cal-close')?.addEventListener('click', () => { $('#calendarModal').classList
 })();
 
 document.addEventListener('auth:changed', loadAndRenderCalendar);
+
 
