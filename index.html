@@ -14,7 +14,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
     rel="stylesheet">
-  
+
+  <script>
+    // aplica o tema salvo antes do CSS carregar (evita FOUC)
+    (function () {
+      try {
+        var t = localStorage.getItem('theme');
+        if (t === 'light') document.documentElement.classList.add('light');
+      } catch (_) { }
+    })();
+  </script>
+
+
   <link rel="stylesheet" href="main.css">
 </head>
 
@@ -28,14 +39,31 @@
       <a href="#/kanban" data-link>Kanban</a>
       <a href="#/indicadores" data-link>Indicadores</a>
       <a href="#/reportar" data-link>Suporte</a>
+      <button id="themeToggle" class="btn secondary" type="button">🌙</button>
       <div class="spacer"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
-        <!-- <button id="mu-open" class="btn hidden" type="button">Novo Comunicado</button> -->
         <a id="members-open" class="hidden" href="#/membros" data-link>Membros</a>
       </div>
       <span class="chip" id="authChip">Offline</span>
       <button id="btnLogin" class="btn secondary" type="button">Entrar</button>
       <button id="btnLogout" class="btn secondary hidden" type="button">Sair</button>
+
+      <!-- Sino de notificações -->
+      <button id="mural-bell" class="icon-button" aria-label="Notificações do mural">
+        🔔
+        <span id="mural-badge" hidden class="badge"></span>
+      </button>
+
+      <div id="mural-dropdown" class="dropdown" hidden>
+        <div class="dropdown-head">
+          <strong>Comunicados</strong>
+          <button id="mural-marcar-lido" class="link">Marcar tudo como lido</button>
+        </div>
+        <ul id="mural-dropdown-list" class="dropdown-list"></ul>
+        <a id="mural-ver-tudo" href="#/mural" class="dropdown-foot">Ver tudo</a>
+      </div>
+
+
 
     </nav>
   </header>
@@ -308,9 +336,17 @@
         <div id="calendar" style="margin-top:12px;">
           <style>
             /* Calendar small styles */
-            #cal-grid { width:100%; }
-            .cal-day.muted { opacity:0.45 }
-            .cal-day .cal-events .cal-evt:hover { background: rgba(59,130,246,.08); }
+            #cal-grid {
+              width: 100%;
+            }
+
+            .cal-day.muted {
+              opacity: 0.45
+            }
+
+            .cal-day .cal-events .cal-evt:hover {
+              background: rgba(59, 130, 246, .08);
+            }
           </style>
 
           <div id="cal-grid" class="card" style="padding:12px;"></div>
@@ -330,7 +366,8 @@
         <div class="field"><label>Data</label><input id="evt-date" type="date" /></div>
         <div class="field"><label>Horário</label><input id="evt-time" type="time" /></div>
         <div class="field"><label>Título</label><input id="evt-title" type="text" /></div>
-        <div class="field"><label>Responsáveis (vírgula)</label><input id="evt-resp" type="text" placeholder="Maria, João" /></div>
+        <div class="field"><label>Responsáveis (vírgula)</label><input id="evt-resp" type="text"
+            placeholder="Maria, João" /></div>
         <div class="field"><label>Descrição</label><textarea id="evt-desc"></textarea></div>
         <div id="evt-msg" class="msg"></div>
       </div>
@@ -707,10 +744,9 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script type="module" src="script.js"></script>
 
-  
+
 </body>
 
 </html>
-

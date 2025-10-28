@@ -18,21 +18,33 @@
     --shadow-lg: 0 12px 30px rgba(2, 6, 23, .35);
 }
 
+:root { color-scheme: dark; }
+html.light { color-scheme: light; }
+
+
 * {
     box-sizing: border-box
 }
 
 .c-members-list label {
-  cursor: pointer;
-  font-size: .9rem;
-  opacity: .85;
-}
-.c-members-list input {
-  cursor: pointer;
+    cursor: pointer;
+    font-size: .9rem;
+    opacity: .85;
 }
 
-.c-members-list label { cursor: pointer; font-size: .95rem; opacity: .9; }
-.c-members-list input { cursor: pointer; }
+.c-members-list input {
+    cursor: pointer;
+}
+
+.c-members-list label {
+    cursor: pointer;
+    font-size: .95rem;
+    opacity: .9;
+}
+
+.c-members-list input {
+    cursor: pointer;
+}
 
 .brand-logo {
     height: 28px;
@@ -846,4 +858,260 @@ input[type="checkbox"]:focus {
 .card .title {
     border-top-left-radius: inherit;
     border-top-right-radius: inherit;
+}
+
+/* === Mural (sino e dropdown) === */
+.icon-button {
+    background: transparent;
+    border: 1px solid rgba(96, 165, 250, .22);
+    padding: 6px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+}
+
+.icon-button:hover {
+    background: rgba(59, 130, 246, .12);
+}
+
+
+
+.dropdown {
+    position: absolute;
+    top: 54px;
+    /* abaixo do header */
+    right: 20px;
+    width: 340px;
+    background: linear-gradient(180deg, rgba(15, 23, 42, .95), rgba(15, 23, 42, .85));
+    border: 1px solid rgba(96, 165, 250, .18);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+}
+
+.dropdown-head,
+.dropdown-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(96, 165, 250, .12);
+}
+
+.dropdown-foot {
+    border-top: 1px solid rgba(96, 165, 250, .12);
+    border-bottom: 0;
+    text-decoration: none;
+    color: var(--text);
+}
+
+.dropdown-list {
+    list-style: none;
+    margin: 0;
+    padding: 8px 0;
+    max-height: 320px;
+    overflow: auto;
+}
+
+.dropdown-list li {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(96, 165, 250, .10);
+}
+
+.dropdown-list li:last-child {
+    border-bottom: 0;
+}
+
+.dropdown-list li.lido {
+    opacity: .65;
+}
+
+.link {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* ===== THEME: LIGHT (claro/azulado) ===== */
+html.light {
+  --bg: #f3f7ff;            /* fundo da página */
+  --surface: #e9f1ff;       /* superfícies secundárias */
+  --card: #ffffff;          /* cartões/caixas */
+  --text: #0b1220;          /* texto principal */
+  --text-muted: #3b4966;    /* texto secundário */
+  --border: #cfe0ff;        /* bordas leves */
+  --primary: #1d72c6;       /* azul principal */
+  --primary-600: #165da1;
+  --primary-700: #124f88;
+  --accent: #3a7bd5;
+  --ring: #c9daf8;
+  --shadow-lg: 0 12px 30px rgba(2, 6, 23, .08);
+}
+
+/* Transição suave para temas */
+html, body, header, .card, .col, input, select, textarea, .pill, .badge, .btn, .nav a {
+  transition: background-color .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+
+/* Fundo geral claro + “aura” azul */
+html.light body {
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(61,132,248,.18), transparent 60%),
+    radial-gradient(800px 400px at 120% 10%, rgba(61,132,248,.12), transparent 70%),
+    var(--bg);
+  background-attachment: fixed, fixed, scroll;
+  color: var(--text);
+}
+
+/* Header claro translúcido */
+html.light header {
+  backdrop-filter: blur(8px) saturate(1.2);
+  background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.66));
+  border-bottom: 1px solid var(--border);
+}
+
+/* Navegação */
+html.light .nav a { color: var(--text); }
+html.light .nav a:hover {
+  background: rgba(61,132,248,.12);
+  border-color: rgba(61,132,248,.28);
+}
+
+/* Botões */
+html.light .btn {
+  background: linear-gradient(180deg, var(--primary), var(--primary-600));
+  color: #fff;
+  border-color: rgba(61,132,248,.35);
+}
+html.light .btn.secondary {
+  background: linear-gradient(180deg, #f7faff, #eef5ff);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* Cards/caixas */
+html.light .card {
+  background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.9));
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Colunas (kanban) */
+html.light .col {
+  background: #ffffff;
+  border: 1px solid var(--border);
+}
+
+/* Itens do kanban */
+html.light .card-item {
+  background: linear-gradient(180deg, #ffffff, #f7fbff);
+  border: 1px solid var(--border);
+}
+
+/* Chips / badges */
+html.light .chip,
+html.light .badge,
+html.light .pill {
+  background: rgba(61,132,248,.10);
+  border: 1px solid rgba(61,132,248,.25);
+  color: #1d2b4f;
+}
+
+/* Inputs */
+html.light input,
+html.light select,
+html.light textarea {
+  background: #ffffff;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* Mensagens */
+html.light .msg.ok {
+  background: rgba(34,197,94,.12);
+  border-color: rgba(34,197,94,.35);
+}
+html.light .msg.err {
+  background: rgba(239,68,68,.12);
+  border-color: rgba(239,68,68,.35);
+}
+
+/* Rodapé */
+html.light footer { color: var(--text-muted); }
+/* ===== LIGHT OVERRIDES — Modal, Backdrop, Dropdown, Comentários, Checklist ===== */
+
+/* Backdrop mais claro/azulado */
+html.light .backdrop {
+  background: rgba(13, 40, 85, .25); /* era rgba(2,6,23,.6) */
+  backdrop-filter: blur(4px);
+}
+
+/* Modal claro */
+html.light .modal {
+  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.94));
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  color: var(--text);
+}
+html.light .modal-head,
+html.light .modal-foot {
+  background: linear-gradient(180deg, #ffffff, #f7faff);
+  border-color: var(--border);
+}
+html.light .modal-body {
+  background: #ffffff;
+}
+
+/* Comentários dentro do modal */
+html.light .comment {
+  background: #f7fbff;                 /* era rgba(15,23,42,.5) */
+  border: 1px solid var(--border);
+}
+html.light .comment .meta {
+  color: var(--text-muted);
+}
+
+/* Itens de checklist do modal */
+html.light #m-checklist label {
+  background: #f9fbff;                 /* era rgba(15,23,42,.35) */
+  border: 1px solid var(--border);     /* era rgba(96,165,250,.12) */
+}
+
+/* Dropdown (sino do mural) claro */
+html.light .dropdown {
+  background: #ffffff;                 /* era gradiente escuro */
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+html.light .dropdown-head,
+html.light .dropdown-foot {
+  border-color: var(--border);
+}
+html.light .dropdown-list li {
+  border-bottom-color: rgba(0,0,0,.06);
+}
+
+/* Extras que também estavam escuros por padrão */
+html.light .auth-tab {
+  background: #f0f6ff;                 /* era rgba(15,23,42,.6) */
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+html.light .auth-tab.active {
+  background: rgba(61,132,248,.14);
+  border-color: rgba(61,132,248,.35);
+}
+html.light .hero {
+  background: linear-gradient(180deg, #ffffff, #f7fbff);  /* era gradiente escuro */
+  border: 1px solid var(--border);
+}
+html.light .kpi-card {
+  background: #ffffff;                 /* era rgba(15,23,42,.6) */
+  border: 1px solid var(--border);
 }

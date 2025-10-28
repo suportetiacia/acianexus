@@ -106,10 +106,185 @@ const Members = {
     }
 };
 
+/* ===========================
+   Mural Service (Firestore / Local)
+=========================== */
+const MuralService = (() => {
+    const COL = 'mural';
+
+    const LocalMural = {
+        load() {
+            try { return JSON.parse(localStorage.getItem('acia-mural') || '{"items":[]}'); }
+            catch { return { items: [] } }
+        },
+        save(data) { localStorage.setItem('acia-mural', JSON.stringify(data)); },
+        list() { return LocalMural.load().items || []; },
+        upsert(item) {
+            const db = LocalMural.load();
+            const i = db.items.findIndex(x => x.id === item.id);
+            if (i >= 0) db.items[i] = { ...db.items[i], ...item };
+            else db.items.push(item);
+            LocalMural.save(db);
+        },
+        bulkMarkRead(uid) {
+            const db = LocalMural.load();
+            db.items = (db.items || []).map(x => ({
+                ...x,
+                lidoBy: { ...(x.lidoBy || {}), [uid]: true }
+            }));
+            LocalMural.save(db);
+        }
+    };
+
+    async function listOnce() {
+        if (!cloudOk) return LocalMural.list();
+        const { collection, getDocs, orderBy, query } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+        const qRef = query(collection(db, COL), orderBy('createdAt', 'desc'));
+        const snap = await getDocs(qRef);
+        const arr = [];
+        snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+        return arr;
+    }
+
+    function listen(cb) {
+        if (!cloudOk) {
+            // polling leve
+            cb(LocalMural.list());
+            const t = setInterval(() => cb(LocalMural.list()), 1000);
+            return () => clearInterval(t);
+        }
+        return (async () => {
+            const { collection, onSnapshot, orderBy, query } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+            const qRef = query(collection(db, COL), orderBy('createdAt', 'desc'));
+            const unsub = onSnapshot(qRef, (snap) => {
+                const arr = [];
+                snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+                cb(arr);
+            });
+            return unsub;
+        })();
+    }
+
+    async function add({ titulo, corpo }) {
+        const rec = {
+            titulo: titulo || '(sem título)',
+            corpo: corpo || '',
+            createdAt: new Date().toISOString(),
+            lidoBy: {} // mapa por uid
+        };
+        if (!cloudOk) {
+            LocalMural.upsert({ id: String(Date.now() + Math.random()), ...rec });
+            return;
+        }
+        const { collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+        await addDoc(collection(db, COL), rec);
+    }
+
+    async function markAllRead(uid) {
+        if (!uid) return;
+        if (!cloudOk) { LocalMural.bulkMarkRead(uid); return; }
+
+        const { collection, getDocs, updateDoc, doc } =
+            await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+        const snap = await getDocs(collection(db, COL));
+        await Promise.all(snap.docs.map(d => {
+            const data = d.data() || {};
+            const lidoBy = data.lidoBy || {};
+            if (lidoBy[uid]) return Promise.resolve();
+            return updateDoc(doc(db, COL, d.id), { lidoBy: { ...lidoBy, [uid]: true } });
+        }));
+    }
+
+    return { listOnce, listen, add, markAllRead };
+})();
+
+
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 const setMsg = (el, type, text) => { if (!el) return; el.className = `msg ${type} show`; el.textContent = text; setTimeout(() => el.classList.remove('show'), 5000); };
 let currentDisplayName = null;
+
+/* ===========================
+   UI do Mural (sino, badge, dropdown)
+=========================== */
+const muralUI = {
+    bell: null,
+    badge: null,
+    dd: null,
+    list: null,
+    btnAllRead: null,
+    btnSeeAll: null,
+    unsub: null,
+    open: false
+};
+
+function renderMural(items) {
+    const uid = currentUser?.uid || 'anon';
+    const unread = items.filter(x => !(x.lidoBy || {})[uid]);
+    // badge
+    if (muralUI.badge) {
+        if (unread.length > 0) {
+            muralUI.badge.textContent = unread.length;
+            muralUI.badge.hidden = false;
+        } else {
+            muralUI.badge.hidden = true;
+        }
+    }
+    // lista
+    if (muralUI.list) {
+        muralUI.list.innerHTML = items.map(x => {
+            const lido = !!(x.lidoBy || {})[uid];
+            return `<li class="${lido ? 'lido' : ''}">
+        <div style="font-weight:700">${x.title || '(sem título)'}</div>
+        ${x.corpo ? `<div class="muted" style="font-size:12px;margin-top:4px">${x.corpo}</div>` : ''}
+      </li>`;
+        }).join('') || '<li class="muted">Sem comunicados</li>';
+    }
+}
+
+async function startMuralLive() {
+    stopMuralLive(); // evita múltiplos listeners
+    // ainda não logado? escuta local
+    muralUI.unsub = await MuralService.listen(renderMural);
+}
+
+function stopMuralLive() {
+    try { muralUI.unsub && muralUI.unsub(); } catch { }
+    muralUI.unsub = null;
+}
+
+function initMuralUI() {
+    muralUI.bell = document.getElementById('mural-bell');
+    muralUI.badge = document.getElementById('mural-badge');
+    muralUI.dd = document.getElementById('mural-dropdown');
+    muralUI.list = document.getElementById('mural-dropdown-list');
+    muralUI.btnAllRead = document.getElementById('mural-marcar-lido');
+    muralUI.btnSeeAll = document.getElementById('mural-ver-tudo');
+
+    // toggle do dropdown
+    muralUI.bell?.addEventListener('click', () => {
+        muralUI.open = !muralUI.open;
+        muralUI.dd.hidden = !muralUI.open;
+    });
+
+    // fechar se clicar fora
+    document.addEventListener('click', (ev) => {
+        if (!muralUI.open) return;
+        const within = muralUI.dd?.contains(ev.target) || muralUI.bell?.contains(ev.target);
+        if (!within) {
+            muralUI.open = false;
+            if (muralUI.dd) muralUI.dd.hidden = true;
+        }
+    });
+
+    // marcar tudo como lido
+    muralUI.btnAllRead?.addEventListener('click', async () => {
+        const uid = currentUser?.uid || 'anon';
+        await MuralService.markAllRead(uid);
+    });
+}
+
+
 
 const ALL_RESP = ["João Vitor Sgobin", "ssgobin"];
 const FLOWS = {
@@ -266,8 +441,6 @@ async function initFirebase() {
                 btnOut.classList.add('hidden');
             }
         }
-
-
         // Observa autenticação
         onAuthStateChanged(auth, async (u) => {
             currentUser = u || null;
@@ -715,6 +888,44 @@ async function isChecklistComplete(cardId) {
 }
 
 
+; (function initMural() {
+    // liga UI imediatamente
+    initMuralUI();
+
+    // (re)liga a escuta sempre que o auth mudar
+    document.addEventListener('auth:changed', () => {
+        startMuralLive();
+    });
+
+    // primeira carga (antes de logar) para mostrar dados locais
+    startMuralLive();
+})();
+// THEME (fonte única da verdade)
+(function () {
+  const root = document.documentElement;
+  const btn  = document.getElementById('themeToggle');
+
+  // aplica estado inicial: confia no que o <head> já colocou na <html>
+  const initial = root.classList.contains('light') ? 'light' : (localStorage.getItem('theme') || 'dark');
+  const apply = (mode) => {
+    root.classList.toggle('light', mode === 'light');
+    try { localStorage.setItem('theme', mode); } catch {}
+    if (btn) btn.textContent = (mode === 'light') ? '🌙' : '☀️';
+  };
+  apply(initial);
+
+  // toggle no clique
+  btn?.addEventListener('click', () => {
+    apply(root.classList.contains('light') ? 'dark' : 'light');
+  });
+
+  // sincroniza entre abas (opcional)
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'theme' && e.newValue) apply(e.newValue);
+  });
+})();
+
+
 
 
 /* ===========================
@@ -868,14 +1079,14 @@ async function isChecklistComplete(cardId) {
             ).join('');
 
             cMembers.innerHTML = users.map(u => {
-  const cid = `c-m-${String(u.uid).replace(/[^a-z0-9_-]/gi,'')}`;
-  return `
+                const cid = `c-m-${String(u.uid).replace(/[^a-z0-9_-]/gi, '')}`;
+                return `
     <label class="chip" for="${cid}" style="display:inline-flex;gap:6px;align-items:center;margin:4px 6px 0 0">
       <input type="checkbox" id="${cid}" name="c-member" value="${u.uid}" data-label="${u.label}">
       <span>${u.label}</span>
     </label>
   `;
-}).join('');
+            }).join('');
         });
     }
 
@@ -3205,4 +3416,3 @@ $('#cal-close')?.addEventListener('click', () => { $('#calendarModal').classList
 
 document.addEventListener('auth:changed', loadAndRenderCalendar);
 
-/* ========== end Calendar integration ========== */
