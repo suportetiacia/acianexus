@@ -468,7 +468,6 @@ footer {
     position: sticky;
     top: 0;
     z-index: 1;
-    
     /* mesmo fundo do card */
     backdrop-filter: blur(4px);
     margin: 0 0 8px 0;
@@ -1198,4 +1197,271 @@ html.light .kpi-card {
     background: #ffffff;
     /* era rgba(15,23,42,.6) */
     border: 1px solid var(--border);
+}
+
+/* ==== Checklist editável ==== */
+.chk-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.chk-row .chk-text {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(96,165,250,.22);
+  background: rgba(15,23,42,.65);
+  color: var(--text);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(17,24,39,.7);
+  color: var(--text);
+  cursor: pointer;
+  transition: transform .05s ease, background .2s ease, border-color .2s ease;
+}
+
+.icon-btn:hover {
+  background: rgba(31,41,55,.8);
+  border-color: rgba(148,163,184,.35);
+}
+
+.icon-btn:active {
+  transform: translateY(1px);
+}
+
+.icon-btn svg {
+  display: block;
+}
+
+#logo {
+  content: url('img/logoacianexus.png'); /* logo padrão (tema escuro) */
+}
+
+html.light #logo {
+  content: url('img/logoacianexus_light.png'); /* logo para tema claro */
+}
+
+html.light .chk-row .chk-text {
+    background: #ffffff;
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+html.light .icon-btn {
+    background: rgba(243, 247, 255, .7);
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+/* === Layout inteligente para os campos de descrição === */
+
+/* Mantém o bloco com grid moderno */
+#c-create .row,
+#m-desc-model .row {
+  display: grid;
+  grid-template-columns: 1fr 2fr; /* Objetivo | Descrever */
+  gap: 14px;
+  align-items: start;
+}
+
+/* Campo de Informações Adicionais ocupa toda a largura */
+#md-info,
+#m-md-info {
+  grid-column: 1 / -1; /* ocupa as duas colunas */
+}
+
+/* Ajuste das alturas e paddings */
+#md-acoes,
+#m-md-acoes {
+  min-height: 160px;
+}
+
+#md-objetivo,
+#m-md-objetivo {
+  min-height: 160px;
+}
+
+
+/* Responsividade — empilha tudo em telas menores */
+@media (max-width: 900px) {
+  #c-create .row,
+  #m-desc-model .row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* === Layout aprimorado dos campos de tarefa === */
+#view-create .row {
+  display: grid;
+  grid-template-columns: 1fr 2fr; /* Objetivo | Descrever */
+  gap: 14px;
+  align-items: start;
+}
+
+/* “Informações adicionais” ocupa toda a linha */
+#view-create .row .field.full {
+  grid-column: 1 / -1;
+}
+
+/* Altura mínima e espaçamento */
+#view-create textarea {
+  min-height: 160px;
+  resize: vertical;
+}
+
+/* Responsivo para telas pequenas */
+@media (max-width: 900px) {
+  #view-create .row {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* === Layout dos campos de descrição === */
+.desc-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;  /* Objetivo | Descrever (maior) */
+  gap: 14px;
+  align-items: start;
+}
+
+/* “Informações Adicionais” ocupa a linha de baixo inteira */
+.desc-grid .full-row {
+  grid-column: 1 / -1;
+}
+
+/* Alturas mínimas (ajuste à sua preferência) */
+.desc-grid textarea {
+  min-height: 160px;
+  resize: vertical;
+}
+
+/* Responsivo: empilha em telas menores */
+@media (max-width: 900px) {
+  .desc-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* === Layout dos campos de descrição === */
+.desc-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr; /* Objetivo | Descrever */
+  gap: 14px;
+  align-items: start;
+}
+
+/* “Informações adicionais” ocupa a linha inteira */
+.desc-grid .full-row {
+  grid-column: 1 / -1;
+}
+
+/* Aparência uniforme */
+.desc-grid textarea {
+  min-height: 160px;
+  width: 100%;
+  resize: vertical;
+}
+
+/* Responsivo */
+@media (max-width: 900px) {
+  .desc-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* === Correção final — faz o "Informações Adicionais" ir pra baixo === */
+
+/* Remove o grid da row que envolve o descritivo */
+#view-create .desc-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 2fr !important; /* Objetivo | Descrever (maior) */
+  gap: 14px;
+  align-items: start;
+}
+
+/* “Informações adicionais” ocupa toda a linha */
+#view-create .desc-grid .full-row {
+  grid-column: 1 / -1 !important;
+}
+
+/* Mantém aparência uniforme */
+#view-create .desc-grid textarea {
+  min-height: 160px;
+  resize: vertical;
+}
+
+/* Responsivo */
+@media (max-width: 900px) {
+  #view-create .desc-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
+/* === FIX FLOW DE EVENTOS (KANBAN) === */
+
+/* Contêiner do flow: colunas alinhadas no topo, sem espaços estranhos */
+#flow-events, 
+#flow-eventos,             /* se houver esse id em algum lugar */
+.board-events {            /* se você estiver usando essa classe */
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important; /* evita "space-between" que cria buracos */
+  gap: 16px !important;
+  overflow-x: auto;        /* scroll horizontal quando faltar espaço */
+  overflow-y: hidden;
+  padding-bottom: 8px;
+}
+
+/* Cada coluna (lane) com largura fixa confortável */
+#flow-events .lane,
+.board-events .lane {
+  flex: 0 0 380px;         /* largura da coluna ~380px */
+  max-width: 420px;
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Cabeçalho da coluna */
+#flow-events .lane .lane-head {
+  flex: 0 0 auto;
+}
+
+/* Lista de cards dentro da coluna */
+#flow-events .lane .cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1 1 auto;          /* cresce conforme o conteúdo */
+  min-height: 140px;       /* área de drop mesmo vazia */
+}
+
+/* Placeholder de drop (drag-and-drop) — evita esticar a coluna */
+#flow-events .lane .cards .ghost,
+#flow-events .lane .cards .placeholder {
+  min-height: 64px;
+  border: 2px dashed rgba(148,163,184,.35);
+  border-radius: 14px;
+  background: rgba(15,23,42,.35);
+}
+
+/* Evitar que alguma regra global estique as colunas */
+#flow-events .lane, 
+#flow-events .lane .cards {
+  align-self: flex-start !important;
 }
