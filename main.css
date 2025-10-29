@@ -468,6 +468,7 @@ footer {
     position: sticky;
     top: 0;
     z-index: 1;
+    
     /* mesmo fundo do card */
     backdrop-filter: blur(4px);
     margin: 0 0 8px 0;
