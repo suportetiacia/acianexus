@@ -32,7 +32,7 @@
 <body>
   <header>
     <nav class="nav">
-      <a href="#/" data-link><img src="img/logoacianexus.png" alt="ACIA Nexus" class="brand-logo"></a>
+      <a href="#/" data-link><img id="logo" alt="ACIA Nexus" class="brand-logo"></a>
       <a href="#/agenda" data-link>Agenda</a>
       <a href="#/criar" data-link>Criar Tarefa</a>
       <a href="#/kanban" data-link>Kanban</a>
@@ -85,7 +85,7 @@
 
       <!-- Mural informativo -->
       <div class="card" style="display:grid; gap:12px">
-        
+
         <h2 style="margin:0">Mural de Informações</h2>
         <p class="muted" style="margin:0">Comunicados gerais para todos os colaboradores.</p>
         <div style="display:flex;gap:8px;justify-content:flex-end">
@@ -96,7 +96,7 @@
 
       </div>
     </section>
-    
+
     <!-- AUTH -->
     <section id="view-auth" class="hidden">
       <div class="card" style="max-width:620px;margin:0 auto">
@@ -235,88 +235,90 @@
                 </div>
               </div>
 
-              <!-- Descritivo da Tarefa -->
-              <!-- Descritivo da Tarefa -->
-              <div class="card" style="margin:12px 0">
-                <h3 style="margin:0 0 8px">Descritivo da Tarefa</h3>
-                <div class="row">
-                  <div class="field">
-                    <label for="md-acoes">Descrever a Tarefa</label>
-                    <textarea id="md-acoes" placeholder="Liste as ações que devem ser feitas, uma por linha"></textarea>
-                  </div>
-                  <div class="field">
-                    <label for="md-objetivo">Objetivo da Tarefa</label>
-                    <textarea id="md-objetivo" placeholder="Qual o resultado esperado?"></textarea>
-                  </div>
-                </div>
+              <!-- === Descritivo da Tarefa === -->
+              <h3 class="subtitle">Descritivo da Tarefa</h3>
+              <div class="desc-grid">
                 <div class="field">
+                  <label for="md-objetivo">Objetivo da Tarefa</label>
+                  <textarea id="md-objetivo" placeholder="Descreva o objetivo..."></textarea>
+                </div>
+
+                <div class="field">
+                  <label for="md-acoes">Descrever a Tarefa</label>
+                  <textarea id="md-acoes" placeholder="Explique as ações, etapas, critérios de aceite..."></textarea>
+                </div>
+
+                <div class="field full-row">
                   <label for="md-info">Informações Adicionais</label>
-                  <textarea id="md-info" placeholder="Restrições, links e contexto relevantes"></textarea>
-                </div>
-                <div class="field" style="display:flex;gap:8px;align-items:center;margin-top:6px">
-                  <input id="c-new-check" type="text" placeholder="Novo item da checklist…" />
-                  <button id="c-add-check" class="btn secondary" type="button">Adicionar à Checklist</button>
-                </div>
-              </div>
-              <!-- Descrição (agora oculta, preenchida automaticamente) -->
-
-
-              <!-- Descrição (agora oculta, preenchida automaticamente) -->
-              <textarea id="c-desc" hidden></textarea>
-
-              <!-- Checklist (gerada do modelo) -->
-              <div>
-                <h4 style="margin:10px 0 6px">Checklist (gerada do modelo)</h4>
-                <div id="c-checklist"></div>
-              </div>
-
-              <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap">
-                <button id="c-ai" class="btn secondary" type="button">Gerar Checklist com IA</button>
-                <button id="c-create" class="btn" type="button">Gerar Card</button>
-                <span id="c-msg" class="msg"></span>
-              </div>
-
-
-
-
-
-              <!-- ROTINAS -->
-              <div id="rt-block" class="card hidden" style="margin:12px 0 14px">
-                <div class="card" style="margin:12px 0 14px">
-                  <h3 style="margin:0 0 8px">Rotinas</h3>
-                  <div class="row">
-                    <div class="field">
-                      <label for="c-rt-enabled">Ativar rotina</label>
-                      <select required id="c-rt-enabled">
-                        <option value="on">Ativada</option>
-                      </select>
-                    </div>
-                    <div class="field">
-                      <label for="c-rt-kind">Periodicidade</label>
-                      <select required id="c-rt-kind">
-                        <option value="DAILY">Diariamente</option>
-                        <option value="WEEKLY">Semanalmente</option>
-                        <option value="BIWEEKLY">Quinzenalmente</option>
-                        <option value="MONTHLY">Mensalmente</option>
-                        <option value="MON">Toda segunda</option>
-                        <option value="TUE">Toda terça</option>
-                        <option value="WED">Toda quarta</option>
-                        <option value="THU">Toda quinta</option>
-                        <option value="FRI">Toda sexta</option>
-                      </select>
-                    </div>
-                  </div>
-                  <p class="muted" style="margin:6px 0 0;font-size:12px">
-                    Os prazos das tarefas rotineiras, são definidos por cada responsável. Quando o prazo é vencido, a
-                    tarefa é gerada novamente e aplicada no início do fluxo automaticamente.
-                  </p>
+                  <textarea id="md-info" placeholder="Links, observações, anexos, referências..."></textarea>
                 </div>
               </div>
 
-              <div>
-                <div id="c-checklist"></div>
+
+              <div class="field" style="display:flex;gap:8px;align-items:center;margin-top:6px">
+                <input id="c-new-check" type="text" placeholder="Novo item da checklist…" />
+                <button id="c-add-check" class="btn secondary" type="button">Adicionar à Checklist</button>
               </div>
             </div>
+            <!-- Descrição (agora oculta, preenchida automaticamente) -->
+
+
+            <!-- Descrição (agora oculta, preenchida automaticamente) -->
+            <textarea id="c-desc" hidden></textarea>
+
+            <!-- Checklist (gerada do modelo) -->
+            <div>
+              <h4 style="margin:10px 0 6px">Checklist (gerada do modelo)</h4>
+              <div id="c-checklist"></div>
+            </div>
+
+            <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap">
+              <button id="c-ai" class="btn secondary" type="button">Gerar Checklist com IA</button>
+              <button id="c-create" class="btn" type="button">Gerar Card</button>
+              <span id="c-msg" class="msg"></span>
+            </div>
+
+
+
+
+
+            <!-- ROTINAS -->
+            <div id="rt-block" class="card hidden" style="margin:12px 0 14px">
+              <div class="card" style="margin:12px 0 14px">
+                <h3 style="margin:0 0 8px">Rotinas</h3>
+                <div class="row">
+                  <div class="field">
+                    <label for="c-rt-enabled">Ativar rotina</label>
+                    <select required id="c-rt-enabled">
+                      <option value="on">Ativada</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="c-rt-kind">Periodicidade</label>
+                    <select required id="c-rt-kind">
+                      <option value="DAILY">Diariamente</option>
+                      <option value="WEEKLY">Semanalmente</option>
+                      <option value="BIWEEKLY">Quinzenalmente</option>
+                      <option value="MONTHLY">Mensalmente</option>
+                      <option value="MON">Toda segunda</option>
+                      <option value="TUE">Toda terça</option>
+                      <option value="WED">Toda quarta</option>
+                      <option value="THU">Toda quinta</option>
+                      <option value="FRI">Toda sexta</option>
+                    </select>
+                  </div>
+                </div>
+                <p class="muted" style="margin:6px 0 0;font-size:12px">
+                  Os prazos das tarefas rotineiras, são definidos por cada responsável. Quando o prazo é vencido, a
+                  tarefa é gerada novamente e aplicada no início do fluxo automaticamente.
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <div id="c-checklist"></div>
+            </div>
+          </div>
     </section>
 
     <!-- AGENDA / CALENDÁRIO -->
@@ -675,27 +677,25 @@
       </div>
 
       <!-- Descritivo da Tarefa — EDITAR -->
-      <div class="row" id="m-desc-model" style="margin:6px 0">
-        <h4 style="margin:0 0 6px">Descritivo da Tarefa</h4>
-        <br>
-        <div class="row">
-          <div class="field">
-            <label for="m-md-objetivo">Objetivo da Tarefa</label>
-            <textarea id="m-md-objetivo" placeholder="Restrições, links, contexto..."></textarea>
-          </div>
-          <div class="field">
-            <label for="m-md-acoes">Descrever a Tarefa</label>
-            <textarea id="m-md-acoes" placeholder="Restrições, links, contexto..."></textarea>
-          </div>
-        </div>
+      <!-- === Descritivo da Tarefa (MODAL / EDITAR CARD) === -->
+      <h3 class="subtitle">🧩 Descritivo da Tarefa</h3>
+      <div id="m-desc-block" class="desc-grid">
         <div class="field">
-          <label for="m-md-info">Informações Adicionais</label>
-          <textarea id="m-md-info" placeholder="Restrições, links, contexto..."></textarea>
+          <label for="m-md-objetivo">🎯 Objetivo da Tarefa</label>
+          <textarea id="m-md-objetivo" placeholder="Descreva o objetivo..."></textarea>
         </div>
-        <p class="muted" style="margin:6px 0 0;font-size:12px">
-          Estes campos preenchem automaticamente a descrição abaixo, igual no Criar.
-        </p>
+
+        <div class="field">
+          <label for="m-md-acoes">🧭 Descrever a Tarefa</label>
+          <textarea id="m-md-acoes" placeholder="Explique as ações, etapas e critérios de aceite..."></textarea>
+        </div>
+
+        <div class="field full-row">
+          <label for="m-md-info">📎 Informações Adicionais</label>
+          <textarea id="m-md-info" placeholder="Links, observações, anexos, referências..."></textarea>
+        </div>
       </div>
+
 
       <div class="field hidden"><label for="m-desc">Descrição</label><textarea id="m-desc" rows="6"></textarea></div>
 
@@ -719,8 +719,6 @@
 
 
           </div>
-          <p class="muted" style="font-size:12px;margin:6px 0 0">Firebase Storage não incluído (por enquanto 😉)
-          </p>
         </div>
       </div>
     </div>
