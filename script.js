@@ -693,6 +693,7 @@ const Sub = {
             if (i >= 0) { const l = (all.cards[i].checklist || []); if (l[idx]) l[idx].done = !l[idx].done; LocalDB.save(all); }
         }
     },
+
     listenChecklist(cardId, cb) {
         if (cloudOk) {
             const listen = async () => {
@@ -710,9 +711,47 @@ const Sub = {
             const emit = () => cb((LocalDB.list().find(c => String(c.id) === String(cardId))?.checklist) || []);
             emit(); const t = setInterval(emit, 700); return () => clearInterval(t);
         }
-    }
+    },
+
+
 
 };
+
+// Atualiza o texto de um item da checklist (por docId)
+async function updateChecklistItem(cardId, docId, newText) {
+    if (cloudOk) {
+        const { doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+        await updateDoc(doc(db, 'cards', cardId, 'checklist', docId), { text: String(newText || '').trim() });
+    } else {
+        const all = LocalDB.load();
+        const i = all.cards.findIndex(c => String(c.id) === String(cardId));
+        if (i >= 0) {
+            const l = (all.cards[i].checklist || []);
+            const it = l.find(x => x.id === docId) || l[docId];
+            if (it) it.text = String(newText || '').trim();
+            LocalDB.save(all);
+        }
+    }
+}
+
+// Remove um item da checklist (por docId)
+async function removeChecklistItem(cardId, docId) {
+    if (cloudOk) {
+        const { doc, deleteDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+        await deleteDoc(doc(db, 'cards', cardId, 'checklist', docId));
+    } else {
+        const all = LocalDB.load();
+        const i = all.cards.findIndex(c => String(c.id) === String(cardId));
+        if (i >= 0) {
+            const l = (all.cards[i].checklist || []);
+            const idx = l.findIndex(x => x.id === docId);
+            if (idx >= 0) l.splice(idx, 1);
+            all.cards[i].checklist = l;
+            LocalDB.save(all);
+        }
+    }
+}
+
 
 async function fetchChecklist(cardId) {
     if (!cloudOk) {
@@ -1315,16 +1354,16 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
 })();
 
 (function tuneKanbanColHeight() {
-  function setColMax() {
-    const header = document.querySelector('header');
-    const headerH = header ? header.getBoundingClientRect().height : 0;
-    // 100vh menos header e um respiro
-    const target = Math.max(320, Math.floor(window.innerHeight - headerH - 110));
-    document.documentElement.style.setProperty('--kanban-col-max-h', `${target}px`);
-  }
-  setColMax();
-  window.addEventListener('resize', setColMax);
-  document.addEventListener('auth:changed', setColMax); // se tua UI mexe com layout após login
+    function setColMax() {
+        const header = document.querySelector('header');
+        const headerH = header ? header.getBoundingClientRect().height : 0;
+        // 100vh menos header e um respiro
+        const target = Math.max(320, Math.floor(window.innerHeight - headerH - 110));
+        document.documentElement.style.setProperty('--kanban-col-max-h', `${target}px`);
+    }
+    setColMax();
+    window.addEventListener('resize', setColMax);
+    document.addEventListener('auth:changed', setColMax); // se tua UI mexe com layout após login
 })();
 
 /* ===========================
@@ -1752,10 +1791,6 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
 
     function boardFlow(b) { return FLOWS[b] || FLOWS.PROJETOS; }
 
-    async function isChecklistComplete(cardId) {
-        const list = await fetchChecklist(cardId);
-        return list.length === 0 ? true : list.every(it => !!it.done);
-    }
 
     function buildCols(flow) {
         columnsEl.innerHTML = flow.map(s => `
@@ -1778,13 +1813,6 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
                     const flow = boardFlow(card.board);
                     const oldIdx = flow.indexOf(card.status);
                     const newIdx = flow.indexOf(newStatus);
-                    if (newIdx > oldIdx) {
-                        const complete = await isChecklistComplete(cardId);
-                        if (!complete) {
-                            alert('Finalize a checklist antes de avançar o status.');
-                            return;
-                        }
-                    }
                     const patch = { status: newStatus };
                     try {
                         if (newStatus === 'EXECUÇÃO' && !card.startAt) patch.startAt = new Date().toISOString();
@@ -2121,20 +2149,55 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
 
         unsubCL = Sub.listenChecklist(card.id, (arr) => {
             mChecklist.innerHTML = (arr || []).map((it, i) => `
-      <label style="display:flex;gap:8px;align-items:center;margin:6px 0">
-        <input type="checkbox" data-id="${it.id || i}" ${it.done ? 'checked' : ''}/>
-        <span ${it.done ? 'style="text-decoration:line-through;opacity:.8"' : ''}>${it.text}</span>
-      </label>
+      <div class="chk-row" data-id="${it.id || i}">
+        <input class="chk-toggle" type="checkbox" ${it.done ? 'checked' : ''}/>
+        <input class="chk-text" type="text" value="${(it.text || '').replace(/"/g, '&quot;')}" ${it.done ? 'style="text-decoration:line-through;opacity:.85"' : ''}/>
+        <button class="icon-btn btn-save" title="Salvar edição" aria-label="Salvar">
+          <!-- Ícone lápis (editar) -->
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm14.71-9.04c.39-.39.39-1.02 0-1.41L15.2 3.29a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.8-1.66z"/>
+          </svg>
+        </button>
+        <button class="icon-btn btn-del" title="Excluir item" aria-label="Excluir">
+          <!-- Ícone lixeira (delete) -->
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+            <path d="M6 19c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+          </svg>
+        </button>
+      </div>
     `).join('') || '<div class="muted">Sem itens</div>';
 
-            mChecklist.querySelectorAll('input[type="checkbox"]').forEach((ch, idx) => {
-                ch.onchange = () => {
-                    const id = ch.getAttribute('data-id');
-                    if (cloudOk && id) Sub.setChecklistDone(modalId, id, ch.checked);
-                    else Sub.toggleChecklistItem(modalId, idx);
+            // liga os eventos
+            mChecklist.querySelectorAll('.chk-row').forEach((row, idx) => {
+                const id = row.getAttribute('data-id');
+                const ch = row.querySelector('.chk-toggle');
+                const txt = row.querySelector('.chk-text');
+                const btnS = row.querySelector('.btn-save');
+                const btnD = row.querySelector('.btn-del');
+
+                // marcar/desmarcar
+                ch.onchange = async () => {
+                    await Sub.setChecklistDone(modalId, id, ch.checked);
+                    if (ch.checked) txt.style.textDecoration = 'line-through', txt.style.opacity = '.85';
+                    else txt.style.textDecoration = '', txt.style.opacity = '';
+                };
+
+                // salvar edição
+                btnS.onclick = async () => {
+                    const val = (txt.value || '').trim();
+                    if (!val) { alert('Escreva algo antes de salvar.'); return; }
+                    await updateChecklistItem(modalId, id, val);
+                };
+
+                // excluir
+                btnD.onclick = async () => {
+                    if (confirm('Remover este item da checklist?')) {
+                        await removeChecklistItem(modalId, id);
+                    }
                 };
             });
         });
+
 
         btnChatOpen.onclick = () => openChat(card);
 
@@ -2163,9 +2226,13 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
 
     mChkAdd.onclick = async () => {
         if (!modalId) return;
-        const t = (mChkNew.value || '').trim(); if (!t) return;
-        await Sub.addChecklistItem(modalId, t); mChkNew.value = '';
+        const t = (mChkNew.value || '').trim();
+        if (!t) return;
+        await Sub.addChecklistItem(modalId, t);
+        mChkNew.value = '';
+        mChkNew.focus();
     };
+
 
     btnSave.onclick = async () => {
         if (!modalId) return;
@@ -2174,15 +2241,6 @@ ${inf || 'Listar todas as informações pertinentes que contribuam para a ação
         const all = lastAll || [];
         const card = all.find(c => String(c.id) === String(modalId));
         const nextStatus = mStatus.value;
-        if (card) {
-            const flow = boardFlow(card.board);
-            const oldIdx = flow.indexOf(card.status);
-            const newIdx = flow.indexOf(nextStatus);
-            if (newIdx > oldIdx) {
-                const complete = await isChecklistComplete(modalId);
-                if (!complete) { alert('Finalize a checklist antes de avançar o status.'); return; }
-            }
-        }
 
         let respUid = null, respLabel = '';
         if (cloudOk) {
@@ -3460,3 +3518,30 @@ $('#cal-close')?.addEventListener('click', () => { $('#calendarModal').classList
 
 document.addEventListener('auth:changed', loadAndRenderCalendar);
 
+
+// ==== TROCA AUTOMÁTICA DE LOGO POR TEMA ====
+const logo = document.getElementById('logo');
+
+function aplicarTema() {
+  const tema = localStorage.getItem('theme') || 'dark';
+  document.body.setAttribute('data-theme', tema);
+
+  // Troca o logo conforme o tema
+  if (logo) {
+    if (tema === 'light') {
+      logo.src = 'img/8572256d-599f-44c3-86d9-40052c7a886c.jpeg'; // <- CAMINHO DA LOGO CLARA
+    } else {
+      logo.src = 'img/logoacianexus.png'; // <- CAMINHO DA LOGO ESCURA
+    }
+  }
+}
+
+// Quando o usuário clica pra trocar o tema:
+document.getElementById('toggleTheme')?.addEventListener('click', () => {
+  const atual = localStorage.getItem('theme') === 'light' ? 'dark' : 'light';
+  localStorage.setItem('theme', atual);
+  aplicarTema();
+});
+
+// Chama uma vez ao carregar a página
+aplicarTema();
